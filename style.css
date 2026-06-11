@@ -331,6 +331,65 @@ p { color: var(--muted); line-height: 1.72; }
 .mock-hero { animation: mockFloat 6s ease-in-out infinite alternate; }
 @keyframes mockFloat { to { transform: translateY(-7px) rotateX(2deg); } }
 
+
+/* Temas especiais de teste */
+.mock-app.theme-diamond_black_event {
+  border-color: rgba(248, 250, 252, 0.42);
+  background:
+    radial-gradient(circle at 18% 8%, rgba(248,250,252,.28), transparent 18rem),
+    radial-gradient(circle at 82% 92%, rgba(148,163,184,.18), transparent 16rem),
+    linear-gradient(135deg, rgba(255,255,255,.08), rgba(0,0,0,.7) 45%, rgba(255,255,255,.035));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 30px 90px rgba(0,0,0,.68), 0 0 0 1px rgba(255,255,255,.06);
+}
+.mock-app.theme-diamond_black_event::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,.22) 49%, transparent 56%);
+  animation: diamondSweep 5.5s ease-in-out infinite;
+  pointer-events: none;
+}
+.mock-app.theme-diamond_black_event .mock-sidebar,
+.mock-app.theme-diamond_black_event .mock-main {
+  border-color: rgba(248,250,252,.28);
+  background: rgba(0,0,0,.42);
+}
+.mock-app.theme-matrix_effect_subscription {
+  border-color: rgba(0,255,102,.38);
+  background:
+    radial-gradient(circle at 14% 0%, rgba(0,255,102,.22), transparent 19rem),
+    linear-gradient(135deg, rgba(0,255,102,.08), rgba(0,0,0,.76));
+  box-shadow: inset 0 1px 0 rgba(0,255,102,.16), 0 30px 90px rgba(0,0,0,.65), 0 0 44px rgba(0,255,102,.12);
+}
+.mock-app.theme-matrix_effect_subscription::before {
+  content: "0101 1110 0011 1010 0101 1100 0110 1011 0010 1111 1001 0110 0100 1010";
+  position: absolute;
+  inset: -8% 0 auto 0;
+  height: 130%;
+  color: rgba(0,255,102,.18);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  letter-spacing: 6px;
+  word-break: break-all;
+  animation: matrixRain 4.4s linear infinite;
+  pointer-events: none;
+}
+.mock-app.theme-matrix_effect_subscription .mock-sidebar,
+.mock-app.theme-matrix_effect_subscription .mock-main {
+  border-color: rgba(0,255,102,.22);
+  background: rgba(0,14,8,.55);
+}
+@keyframes diamondSweep {
+  0%, 35% { transform: translateX(-38%) rotate(8deg); opacity: 0; }
+  48% { opacity: 1; }
+  75%, 100% { transform: translateX(38%) rotate(8deg); opacity: 0; }
+}
+@keyframes matrixRain {
+  from { transform: translateY(-28%); }
+  to { transform: translateY(18%); }
+}
+
 main { max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 32px) 54px; }
 .section { margin: 30px 0; }
 .section-head {
@@ -652,4 +711,33 @@ footer strong { color: var(--text); }
   .theme-actions { grid-template-columns: 1fr; }
   .cinema-preview { min-height: auto; }
   .mock-app { grid-template-columns: 58px 1fr; min-height: 300px; }
+}
+
+.theme-access {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  gap: 7px;
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 900;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: rgba(255,255,255,.045);
+  margin: -2px 0 8px;
+}
+.theme-access.subscription {
+  color: #bafcd0;
+  border-color: color-mix(in srgb, #00ff66, transparent 58%);
+  background: linear-gradient(135deg, rgba(0,255,102,.14), rgba(0,0,0,.08));
+  box-shadow: 0 0 24px rgba(0,255,102,.08);
+}
+.theme-expired {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--warning);
+  font-weight: 950;
+  margin: 4px 0 10px;
 }

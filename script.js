@@ -60,6 +60,42 @@ const THEME_VISUALS = {
       "Foco": "Modernidade",
       "Visual": "Transparência refinada"
     }
+  },
+  diamond_black_event: {
+    features: [
+      "Fundo preto cristal com profundidade de diamante",
+      "Letras em branco gelo e contornos premium de alto contraste",
+      "Brilhos frios, reflexos cortados e aparência de joia escura",
+      "Tema especial de evento semanal por tempo limitado",
+      "Ideal para testar compra rápida e liberação no app"
+    ],
+    chips: ["Evento", "Diamond", "Black"],
+    palette: ["#030405", "#F8FAFC", "#CBD5E1", "#0A0D12"],
+    specs: {
+      "Estilo": "Black Crystal",
+      "Evento": "Semanal / limitado",
+      "Contraste": "Branco gelo",
+      "Preço teste": "R$ 2,50"
+    }
+  },
+  matrix_effect_subscription: {
+    features: [
+      "Chuva de códigos com atmosfera Matrix",
+      "Brilho verde digital e fundo preto terminal",
+      "Efeito visual hacker/cyber para o app",
+      "Assinatura real: libera o tema por 30 dias",
+      "Depois de 30 dias, precisa renovar com novo PIX",
+      "Preço mensal simbólico para testar entrega e expiração"
+    ],
+    chips: ["Matrix", "Cyber", "Assinatura"],
+    palette: ["#020705", "#00FF66", "#0B2A18", "#C8FFD8"],
+    specs: {
+      "Estilo": "Matrix Code",
+      "Efeito": "Chuva digital",
+      "Tipo": "Assinatura mensal",
+      "Duração": "30 dias",
+      "Preço mensal": "R$ 0,50"
+    }
   }
 };
 
@@ -93,6 +129,22 @@ function money(value) {
   if (typeof value === "string" && value.trim()) return value;
   const cents = Number(value || 0);
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function formatDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
+function isSubscription(theme) {
+  return theme?.is_subscription || theme?.access_type === "subscription" || String(theme?.category || "").toLowerCase().includes("assinatura");
+}
+
+function accessLabel(theme) {
+  if (isSubscription(theme)) return `Assinatura mensal • ${theme.duration_label || "30 dias"}`;
+  return theme.duration_label || "Compra vitalícia";
 }
 
 function visualFor(theme) {
@@ -171,8 +223,9 @@ function renderSkeleton() {
 
 function createMockPreview(theme, compact = true) {
   const accent = theme.accent_color || "#7dd3fc";
+  const themeClass = `theme-${String(theme?.id || "default").replace(/[^a-z0-9_-]/gi, "_")}`;
   return `
-    <div class="mock-app ${compact ? "" : "modal-preview"}" style="--theme-accent:${escapeHtml(accent)}">
+    <div class="mock-app ${themeClass} ${compact ? "" : "modal-preview"}" style="--theme-accent:${escapeHtml(accent)}">
       <div class="mock-sidebar"><span></span><span></span><span></span><span></span></div>
       <div class="mock-main">
         <div class="mock-window-dots"><i></i><i></i><i></i></div>
@@ -230,6 +283,9 @@ function renderThemes(themes, ownedIds = null) {
   for (const theme of list) {
     const visual = visualFor(theme);
     const owned = Boolean(theme.owned || ownedIds?.has(theme.id));
+    const subscription = isSubscription(theme);
+    const expired = theme.owned_status === "expired";
+    const canRenew = subscription && owned;
     const card = document.createElement("article");
     card.className = "theme-card";
     card.style.setProperty("--theme-accent", theme.accent_color || visual.palette?.[0] || "#7dd3fc");
@@ -238,19 +294,21 @@ function renderThemes(themes, ownedIds = null) {
         <span class="theme-category">${escapeHtml(theme.category || "premium")}</span>
         <span class="theme-price">${escapeHtml(theme.price_label || money(theme.price_cents))}</span>
       </div>
+      <div class="theme-access ${subscription ? "subscription" : ""}">${escapeHtml(accessLabel(theme))}</div>
       <div class="theme-preview">${createMockPreview(theme, true)}</div>
       <h3>${escapeHtml(theme.name || theme.id)}</h3>
       <p>${escapeHtml(theme.description || "Tema exclusivo conectado ao app principal.")}</p>
       <div class="feature-pills">${(visual.chips || []).slice(0, 3).map(chip => `<span>${escapeHtml(chip)}</span>`).join("")}</div>
-      ${owned ? `<span class="theme-owned">✓ Já liberado na sua conta</span>` : ""}
+      ${owned ? `<span class="theme-owned">✓ ${subscription ? `Assinatura ativa${theme.expires_at ? ` até ${escapeHtml(formatDate(theme.expires_at))}` : ""}` : "Já liberado na sua conta"}</span>` : ""}
+      ${expired ? `<span class="theme-expired">Assinatura expirada — renove para usar no app</span>` : ""}
       <div class="theme-actions">
         <button class="btn ghost" data-action="details">Ver detalhes</button>
-        <button class="btn ${owned ? "ghost" : "primary"}" data-action="buy" ${owned ? "disabled" : ""}>${owned ? "Comprado" : "Comprar PIX"}</button>
+        <button class="btn ${owned && !canRenew ? "ghost" : "primary"}" data-action="buy" ${owned && !canRenew ? "disabled" : ""}>${canRenew ? "Renovar assinatura" : owned ? "Comprado" : subscription ? "Assinar PIX" : "Comprar PIX"}</button>
       </div>
     `;
     card.querySelector('[data-action="details"]').addEventListener("click", () => openThemeModal(theme, owned));
     const buyButton = card.querySelector('[data-action="buy"]');
-    if (!owned) buyButton.addEventListener("click", () => openPurchaseModal(theme));
+    if (!owned || canRenew) buyButton.addEventListener("click", () => openPurchaseModal(theme));
     grid.appendChild(card);
   }
 }
@@ -341,17 +399,18 @@ function openThemeModal(theme, owned = false) {
   $("modalCategory").textContent = theme.category || "premium";
   $("modalTitle").textContent = theme.name || theme.id;
   $("modalDescription").textContent = theme.description || "Tema exclusivo conectado ao app principal.";
-  $("modalPrice").textContent = theme.price_label || money(theme.price_cents);
+  $("modalPrice").textContent = `${theme.price_label || money(theme.price_cents)} • ${accessLabel(theme)}`;
   $("modalPalette").innerHTML = (visual.palette || []).map(color => `<span style="background:${escapeHtml(color)}"></span>`).join("");
   $("modalFeatures").innerHTML = (visual.features || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
   $("modalPreview").outerHTML = `<div id="modalPreview" class="mock-app modal-preview" style="--theme-accent:${escapeHtml(theme.accent_color || visual.palette?.[0] || "#7dd3fc")}">${createMockPreview(theme, false).replace(/^<div class="mock-app[^>]*>|<\/div>$/g, "")}</div>`;
   $("modalSpecs").innerHTML = Object.entries(visual.specs || {}).map(([key, value]) => `<div><b>${escapeHtml(key)}</b><span>${escapeHtml(value)}</span></div>`).join("");
   const button = $("modalBuyBtn");
-  button.textContent = owned ? "Já comprado" : "Comprar com PIX";
-  button.disabled = owned;
+  const subscription = isSubscription(theme);
+  button.textContent = owned && subscription ? "Renovar assinatura" : owned ? "Já comprado" : subscription ? "Assinar com PIX" : "Comprar com PIX";
+  button.disabled = owned && !subscription;
   button.onclick = () => {
     closeThemeModal();
-    if (!owned) openPurchaseModal(theme);
+    if (!owned || subscription) openPurchaseModal(theme);
   };
   $("themeModal").classList.remove("hidden");
 }
@@ -369,7 +428,9 @@ function openPurchaseModal(theme) {
   }
   selectedTheme = theme;
   $("purchaseTitle").textContent = `Comprar ${theme.name || theme.id}`;
-  $("purchaseSubtitle").textContent = `${theme.price_label || money(theme.price_cents)} • O tema será liberado na sua conta após o pagamento.`;
+  $("purchaseSubtitle").textContent = isSubscription(theme)
+    ? `${theme.price_label || money(theme.price_cents)} • Assinatura de ${theme.duration_label || "30 dias"}. Depois precisa renovar para continuar usando.`
+    : `${theme.price_label || money(theme.price_cents)} • O tema será liberado na sua conta após o pagamento.`;
   $("buyerName").value = localStorage.getItem("pcultra_theme_username") || $("username").value.trim() || "";
   $("buyerEmail").value = localStorage.getItem("pcultra_theme_email") || "";
   setMessage("purchaseMessage", "");
@@ -452,8 +513,9 @@ async function verifyPayment() {
     const status = order.status || result.mercadopago_status || "pending";
     if (status === "delivered") {
       $("paymentStatusBadge").textContent = "Tema liberado";
-      setMessage("paymentMessage", "Pagamento aprovado. Tema liberado no app principal.", "success");
-      toast("Tema liberado na sua conta.", "success");
+      const expires = order.access_expires_at ? ` Expira em ${formatDate(order.access_expires_at)}.` : "";
+      setMessage("paymentMessage", `Pagamento aprovado. Tema liberado no app principal.${expires}`, "success");
+      toast(`Tema liberado na sua conta.${expires}`, "success");
       await loadStore();
     } else {
       $("paymentStatusBadge").textContent = status;
