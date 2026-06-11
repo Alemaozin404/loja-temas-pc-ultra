@@ -3,134 +3,235 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PC Ultra Manager — Loja de Temas</title>
-  <meta name="description" content="Loja oficial de temas premium do PC Ultra Manager." />
+  <title>PC Ultra Manager — Loja de Temas Premium</title>
+  <meta name="description" content="Loja oficial de temas premium do PC Ultra Manager. Compre no site e receba no app principal." />
+  <meta name="theme-color" content="#070b14" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="ambient ambient-one"></div>
-  <div class="ambient ambient-two"></div>
+  <div id="progressBar" class="progress-bar"></div>
+  <div class="noise"></div>
+  <div class="aurora aurora-a"></div>
+  <div class="aurora aurora-b"></div>
+  <div class="aurora aurora-c"></div>
 
-  <header class="hero">
-    <nav class="topbar glass">
-      <div class="brand">
-        <span class="logo">PC</span>
-        <div>
+  <header class="hero" id="top">
+    <nav class="topbar glass" data-reveal>
+      <a class="brand" href="#top" aria-label="PC Ultra Manager">
+        <span class="brand-mark">PC</span>
+        <span>
           <strong>PC Ultra Manager</strong>
-          <small>Loja de Temas</small>
-        </div>
+          <small>Theme Store</small>
+        </span>
+      </a>
+
+      <div class="nav-links" aria-label="Navegação principal">
+        <a href="#store">Temas</a>
+        <a href="#how">Como recebe</a>
+        <a href="#account">Conta</a>
       </div>
-      <div class="session-box">
+
+      <div class="session-pill" id="sessionPill">
+        <span class="dot"></span>
         <span id="sessionStatus">Desconectado</span>
-        <button id="logoutBtn" class="ghost hidden">Sair</button>
+        <button id="logoutBtn" class="tiny-btn hidden">Sair</button>
       </div>
     </nav>
 
-    <section class="hero-grid">
-      <div class="hero-copy">
-        <span class="eyebrow">Temas conectados ao app principal</span>
-        <h1>Compre no site. Receba no app.</h1>
+    <section class="hero-stage">
+      <div class="hero-copy" data-reveal>
+        <span class="eyebrow">Loja oficial conectada ao servidor</span>
+        <h1>
+          Temas premium com entrega automática no app.
+        </h1>
         <p>
-          Use o mesmo login do PC Ultra Manager. Depois do PIX aprovado, o servidor libera
-          o tema na sua conta e o app principal sincroniza automaticamente.
+          Faça login com a mesma conta do PC Ultra Manager, compre pelo PIX e desbloqueie o tema na Galeria do app principal.
         </p>
         <div class="hero-actions">
-          <a href="#login" class="primary-link">Entrar com minha conta</a>
-          <a href="#store" class="secondary-link">Ver temas</a>
+          <a class="btn primary" href="#store">Explorar temas</a>
+          <a class="btn secondary" href="#account">Entrar na conta</a>
+        </div>
+        <div class="hero-metrics">
+          <div><b id="metricThemes">3</b><span>temas ativos</span></div>
+          <div><b>PIX</b><span>liberação pelo servidor</span></div>
+          <div><b>1 login</b><span>site e app</span></div>
         </div>
       </div>
-      <div class="hero-card glass">
-        <div class="preview-window">
-          <span></span><span></span><span></span>
+
+      <div class="cinema-preview glass" data-reveal>
+        <div class="preview-topline">
+          <span id="previewThemeName">Windows 11 Pro Glass</span>
+          <i id="previewPrice">R$ 9,90</i>
         </div>
-        <h3>Liquid Glass Pro</h3>
-        <p>Vidro moderno, profundidade e acabamento premium.</p>
-        <div class="mini-bars"><i></i><i></i><i></i></div>
+        <div class="mock-app mock-hero" id="heroMock">
+          <div class="mock-sidebar"><span></span><span></span><span></span><span></span></div>
+          <div class="mock-main">
+            <div class="mock-window-dots"><i></i><i></i><i></i></div>
+            <div class="mock-title"></div>
+            <div class="mock-grid"><span></span><span></span><span></span></div>
+            <div class="mock-line wide"></div>
+            <div class="mock-line"></div>
+          </div>
+        </div>
+        <div class="preview-caption">
+          <span class="pulse"></span>
+          <span>Prévia visual animada — veja detalhes em cada tema</span>
+        </div>
       </div>
     </section>
   </header>
 
   <main>
-    <section id="login" class="section shell glass">
-      <div class="section-title">
-        <span>01</span>
+    <section id="account" class="section account-shell glass" data-reveal>
+      <div class="section-head">
+        <span class="section-number">01</span>
         <div>
-          <h2>Login único</h2>
-          <p>Entre com a mesma conta usada no app principal.</p>
+          <h2>Conta conectada</h2>
+          <p>Use o mesmo usuário e senha do app. O site só conversa com o servidor; Mercado Pago e entrega ficam protegidos na API.</p>
         </div>
       </div>
 
-      <div class="form-grid">
+      <div class="account-grid">
         <label>
-          Usuário
-          <input id="username" autocomplete="username" placeholder="seu usuário do app" />
+          Usuário do app
+          <input id="username" autocomplete="username" placeholder="ex: CEOadmin ou seu usuário" />
         </label>
         <label>
           Senha
           <input id="password" type="password" autocomplete="current-password" placeholder="sua senha" />
         </label>
-        <button id="loginBtn" class="primary">Entrar</button>
-        <button id="registerBtn" class="ghost">Criar conta</button>
+        <button id="loginBtn" class="btn primary">Entrar</button>
+        <button id="registerBtn" class="btn ghost">Criar conta</button>
       </div>
-      <p id="loginMessage" class="message"></p>
+      <p class="message" id="loginMessage"></p>
     </section>
 
-    <section id="store" class="section">
-      <div class="section-title">
-        <span>02</span>
+    <section id="store" class="section" data-reveal>
+      <div class="section-head store-head">
+        <span class="section-number">02</span>
         <div>
-          <h2>Temas disponíveis</h2>
-          <p>Os temas vêm direto do servidor. Nada sensível fica salvo no site.</p>
+          <h2>Galeria de temas</h2>
+          <p>Agora cada tema mostra prévia, cores, efeitos, funções visuais e o que muda dentro do app.</p>
         </div>
       </div>
-      <div class="store-toolbar glass">
-        <button id="reloadStoreBtn" class="ghost">Atualizar loja</button>
-        <button id="myThemesBtn" class="ghost">Meus temas</button>
+
+      <div class="store-panel glass">
+        <div class="search-row">
+          <div class="search-box">
+            <span>⌕</span>
+            <input id="searchInput" placeholder="Buscar tema, efeito, categoria..." />
+          </div>
+          <button id="reloadStoreBtn" class="btn ghost">Atualizar loja</button>
+          <button id="myThemesBtn" class="btn secondary">Meus temas</button>
+        </div>
+        <div class="chips" id="categoryChips"></div>
       </div>
+
       <div id="themesGrid" class="themes-grid"></div>
     </section>
 
-    <section id="payment" class="section shell glass hidden">
-      <div class="section-title">
-        <span>03</span>
+    <section id="payment" class="section payment-shell glass hidden" data-reveal>
+      <div class="section-head">
+        <span class="section-number">03</span>
         <div>
           <h2>Pagamento PIX</h2>
-          <p>Pague o PIX e depois clique em verificar para liberar o tema.</p>
+          <p>Escaneie o QR Code ou copie o PIX. Depois clique em verificar pagamento para liberar o tema.</p>
         </div>
       </div>
 
       <div class="payment-grid">
-        <div>
+        <div class="payment-copy">
+          <span class="status-badge" id="paymentStatusBadge">Aguardando PIX</span>
           <h3 id="paymentThemeName">Pedido de tema</h3>
           <p id="paymentStatus">Aguardando pagamento.</p>
           <textarea id="pixCode" readonly placeholder="PIX Copia e Cola aparecerá aqui"></textarea>
           <div class="payment-actions">
-            <button id="copyPixBtn" class="primary">Copiar PIX</button>
-            <button id="verifyPaymentBtn" class="ghost">Verificar pagamento</button>
+            <button id="copyPixBtn" class="btn primary">Copiar PIX</button>
+            <button id="verifyPaymentBtn" class="btn ghost">Verificar pagamento</button>
           </div>
           <p id="paymentMessage" class="message"></p>
         </div>
         <div class="qr-card">
+          <div class="qr-glow"></div>
           <img id="qrImage" alt="QR Code PIX" class="hidden" />
           <div id="qrFallback" class="qr-fallback">QR Code aguardando servidor</div>
         </div>
       </div>
     </section>
 
-    <section class="section notice">
-      <strong>Como o app recebe?</strong>
-      <p>
-        Após a aprovação no Mercado Pago, o servidor salva o tema na sua conta.
-        No app principal, entre na Galeria de Temas e clique em <b>Sincronizar compras</b>.
-      </p>
+    <section id="how" class="section how-grid" data-reveal>
+      <article class="how-card glass">
+        <span>1</span>
+        <h3>Compra no site</h3>
+        <p>Você escolhe um tema, coloca nome/e-mail e o servidor gera o PIX.</p>
+      </article>
+      <article class="how-card glass">
+        <span>2</span>
+        <h3>Mercado Pago confirma</h3>
+        <p>O webhook valida o pagamento no servidor e evita entrega falsa.</p>
+      </article>
+      <article class="how-card glass">
+        <span>3</span>
+        <h3>Recebe no app</h3>
+        <p>Na Galeria de Temas do app, clique em Sincronizar compras.</p>
+      </article>
     </section>
   </main>
 
   <footer>
-    <span>PC Ultra Manager</span>
-    <span>Site estático seguro: Mercado Pago e entrega ficam no servidor.</span>
+    <strong>PC Ultra Manager Theme Store</strong>
+    <span>Site estático. Login, PIX e entrega são processados no servidor oficial.</span>
   </footer>
 
+  <div id="themeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card glass">
+      <button class="modal-close" data-close-modal aria-label="Fechar">×</button>
+      <div class="modal-grid">
+        <div>
+          <span id="modalCategory" class="theme-kicker">premium</span>
+          <h2 id="modalTitle">Tema</h2>
+          <p id="modalDescription"></p>
+          <div class="modal-price" id="modalPrice">R$ 0,00</div>
+          <div class="palette" id="modalPalette"></div>
+          <h4>O que esse tema muda no app</h4>
+          <ul id="modalFeatures" class="feature-list"></ul>
+          <div class="modal-actions">
+            <button id="modalBuyBtn" class="btn primary">Comprar com PIX</button>
+            <button class="btn ghost" data-close-modal>Voltar</button>
+          </div>
+        </div>
+        <div class="modal-preview-wrap">
+          <div id="modalPreview" class="mock-app modal-preview"></div>
+          <div class="spec-grid" id="modalSpecs"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="purchaseModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="purchaseTitle">
+    <div class="modal-backdrop" data-close-purchase></div>
+    <div class="modal-card purchase-card glass">
+      <button class="modal-close" data-close-purchase aria-label="Fechar">×</button>
+      <span class="theme-kicker">Mercado Pago PIX</span>
+      <h2 id="purchaseTitle">Finalizar compra</h2>
+      <p id="purchaseSubtitle">Preencha seus dados para gerar o PIX.</p>
+      <div class="purchase-form">
+        <label>
+          Nome para o pedido
+          <input id="buyerName" placeholder="Seu nome" />
+        </label>
+        <label>
+          E-mail para o PIX
+          <input id="buyerEmail" type="email" placeholder="seuemail@gmail.com" />
+        </label>
+        <button id="confirmPurchaseBtn" class="btn primary">Gerar QR Code PIX</button>
+      </div>
+      <p id="purchaseMessage" class="message"></p>
+    </div>
+  </div>
+
+  <div id="toastHost" class="toast-host"></div>
   <script src="script.js"></script>
 </body>
 </html>

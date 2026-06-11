@@ -1,45 +1,50 @@
-# Loja de Temas — PC Ultra Manager
+# PC Ultra Manager — Loja de Temas Premium
 
-Este site é estático e pode ser publicado gratuitamente no GitHub Pages, Vercel, Netlify ou Cloudflare Pages.
+Site estático da loja de temas conectada ao servidor oficial.
 
-## O que ele faz
+## Arquivos
 
-- Usa o mesmo login do app (`/auth/login`).
-- Carrega temas do servidor (`/themes/store`).
-- Compra tema pelo servidor (`/themes/purchase`).
-- Mostra QR Code PIX e PIX Copia e Cola retornados pelo servidor.
-- Verifica pagamento (`/themes/orders/{id}/payment-status`).
-- Não guarda token do Mercado Pago no front-end.
+- `index.html` — estrutura da loja
+- `style.css` — visual premium/cinema/liquid glass
+- `script.js` — login, loja, compra PIX, QR Code e sincronização com servidor
 
-## Onde configurar a URL do servidor
+## Publicar no GitHub Pages
 
-No começo do arquivo `script.js`:
-
-```js
-const API_URL = localStorage.getItem("pcultra_api_url") || "https://pc-ultra-manager-server.onrender.com";
-```
+1. Crie ou abra o repositório do site.
+2. Envie estes arquivos para a raiz do repositório:
+   - `index.html`
+   - `style.css`
+   - `script.js`
+   - `README_PUBLICAR.md`
+3. Vá em `Settings > Pages`.
+4. Use:
+   - Source: `Deploy from a branch`
+   - Branch: `main`
+   - Folder: `/root`
+5. Salve e aguarde o link do GitHub Pages.
 
 ## CORS no Render
 
-Adicione o domínio do site na variável `CORS_ORIGINS` do servidor.
-
-Exemplo GitHub Pages:
+No servidor `pc-ultra-manager-server`, em Environment, configure:
 
 ```env
 CORS_ORIGINS=https://alemaozin404.github.io,https://alemaozin404.github.io/loja-temas-pc-ultra
 ```
 
-Exemplo Vercel:
+Depois faça `Manual Deploy > Deploy latest commit`.
 
-```env
-CORS_ORIGINS=https://loja-temas-pc-ultra.vercel.app
+## Servidor usado
+
+Por padrão o site chama:
+
+```txt
+https://pc-ultra-manager-server.onrender.com
 ```
 
-## Publicar no GitHub Pages
+Para trocar sem editar o código, abra o console do navegador e rode:
 
-1. Crie um repositório, por exemplo `loja-temas-pc-ultra`.
-2. Envie `index.html`, `style.css`, `script.js` e este README.
-3. Vá em `Settings > Pages`.
-4. Escolha `Deploy from a branch`.
-5. Selecione `main / root`.
-6. Aguarde o GitHub gerar o link público.
+```js
+localStorage.setItem("pcultra_api_url", "https://seu-servidor.onrender.com")
+```
+
+Depois recarregue a página.
