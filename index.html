@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PC Ultra Manager — Loja de Temas</title>
+  <meta name="description" content="Loja oficial de temas premium do PC Ultra Manager." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="hero">
+    <nav class="topbar glass">
+      <div class="brand">
+        <span class="logo">PC</span>
+        <div>
+          <strong>PC Ultra Manager</strong>
+          <small>Loja de Temas</small>
+        </div>
+      </div>
+      <div class="session-box">
+        <span id="sessionStatus">Desconectado</span>
+        <button id="logoutBtn" class="ghost hidden">Sair</button>
+      </div>
+    </nav>
+
+    <section class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Temas conectados ao app principal</span>
+        <h1>Compre no site. Receba no app.</h1>
+        <p>
+          Use o mesmo login do PC Ultra Manager. Depois do PIX aprovado, o servidor libera
+          o tema na sua conta e o app principal sincroniza automaticamente.
+        </p>
+        <div class="hero-actions">
+          <a href="#login" class="primary-link">Entrar com minha conta</a>
+          <a href="#store" class="secondary-link">Ver temas</a>
+        </div>
+      </div>
+      <div class="hero-card glass">
+        <div class="preview-window">
+          <span></span><span></span><span></span>
+        </div>
+        <h3>Liquid Glass Pro</h3>
+        <p>Vidro moderno, profundidade e acabamento premium.</p>
+        <div class="mini-bars"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <section id="login" class="section shell glass">
+      <div class="section-title">
+        <span>01</span>
+        <div>
+          <h2>Login único</h2>
+          <p>Entre com a mesma conta usada no app principal.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          Usuário
+          <input id="username" autocomplete="username" placeholder="seu usuário do app" />
+        </label>
+        <label>
+          Senha
+          <input id="password" type="password" autocomplete="current-password" placeholder="sua senha" />
+        </label>
+        <button id="loginBtn" class="primary">Entrar</button>
+        <button id="registerBtn" class="ghost">Criar conta</button>
+      </div>
+      <p id="loginMessage" class="message"></p>
+    </section>
+
+    <section id="store" class="section">
+      <div class="section-title">
+        <span>02</span>
+        <div>
+          <h2>Temas disponíveis</h2>
+          <p>Os temas vêm direto do servidor. Nada sensível fica salvo no site.</p>
+        </div>
+      </div>
+      <div class="store-toolbar glass">
+        <button id="reloadStoreBtn" class="ghost">Atualizar loja</button>
+        <button id="myThemesBtn" class="ghost">Meus temas</button>
+      </div>
+      <div id="themesGrid" class="themes-grid"></div>
+    </section>
+
+    <section id="payment" class="section shell glass hidden">
+      <div class="section-title">
+        <span>03</span>
+        <div>
+          <h2>Pagamento PIX</h2>
+          <p>Pague o PIX e depois clique em verificar para liberar o tema.</p>
+        </div>
+      </div>
+
+      <div class="payment-grid">
+        <div>
+          <h3 id="paymentThemeName">Pedido de tema</h3>
+          <p id="paymentStatus">Aguardando pagamento.</p>
+          <textarea id="pixCode" readonly placeholder="PIX Copia e Cola aparecerá aqui"></textarea>
+          <div class="payment-actions">
+            <button id="copyPixBtn" class="primary">Copiar PIX</button>
+            <button id="verifyPaymentBtn" class="ghost">Verificar pagamento</button>
+          </div>
+          <p id="paymentMessage" class="message"></p>
+        </div>
+        <div class="qr-card">
+          <img id="qrImage" alt="QR Code PIX" class="hidden" />
+          <div id="qrFallback" class="qr-fallback">QR Code aguardando servidor</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section notice">
+      <strong>Como o app recebe?</strong>
+      <p>
+        Após a aprovação no Mercado Pago, o servidor salva o tema na sua conta.
+        No app principal, entre na Galeria de Temas e clique em <b>Sincronizar compras</b>.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <span>PC Ultra Manager</span>
+    <span>Site estático seguro: Mercado Pago e entrega ficam no servidor.</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
