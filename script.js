@@ -66,14 +66,16 @@ const THEME_VISUALS = {
       "Fundo preto cristal com profundidade de diamante",
       "Letras em branco gelo e contornos premium de alto contraste",
       "Brilhos frios, reflexos cortados e aparência de joia escura",
-      "Tema especial de evento semanal por tempo limitado",
-      "Ideal para testar compra rápida e liberação no app"
+      "Tema especial de evento semanal por tempo limitado na loja",
+      "Quem compra durante o evento recebe acesso permanente na conta",
+      "Ideal para testar compra rápida, expiração e liberação no app"
     ],
     chips: ["Evento", "Diamond", "Black"],
     palette: ["#030405", "#F8FAFC", "#CBD5E1", "#0A0D12"],
     specs: {
       "Estilo": "Black Crystal",
-      "Evento": "Semanal / limitado",
+      "Evento": "Semanal / limitado na loja",
+      "Acesso": "Permanente após compra",
       "Contraste": "Branco gelo",
       "Preço teste": "R$ 2,50"
     }
@@ -142,8 +144,15 @@ function isSubscription(theme) {
   return theme?.is_subscription || theme?.access_type === "subscription" || String(theme?.category || "").toLowerCase().includes("assinatura");
 }
 
+function isWeeklyEvent(theme) {
+  const category = String(theme?.category || "").toLowerCase();
+  const accessType = String(theme?.access_type || "").toLowerCase();
+  return theme?.is_weekly_event || accessType === "weekly_event" || category.includes("evento") || theme?.id === "diamond_black_event";
+}
+
 function accessLabel(theme) {
   if (isSubscription(theme)) return `Assinatura mensal • ${theme.duration_label || "30 dias"}`;
+  if (isWeeklyEvent(theme)) return `Evento semanal • ${theme.duration_label || "7 dias"}`;
   return theme.duration_label || "Compra vitalícia";
 }
 
@@ -284,6 +293,7 @@ function renderThemes(themes, ownedIds = null) {
     const visual = visualFor(theme);
     const owned = Boolean(theme.owned || ownedIds?.has(theme.id));
     const subscription = isSubscription(theme);
+    const eventTheme = isWeeklyEvent(theme);
     const expired = theme.owned_status === "expired";
     const canRenew = subscription && owned;
     const card = document.createElement("article");
@@ -294,16 +304,16 @@ function renderThemes(themes, ownedIds = null) {
         <span class="theme-category">${escapeHtml(theme.category || "premium")}</span>
         <span class="theme-price">${escapeHtml(theme.price_label || money(theme.price_cents))}</span>
       </div>
-      <div class="theme-access ${subscription ? "subscription" : ""}">${escapeHtml(accessLabel(theme))}</div>
+      <div class="theme-access ${subscription ? "subscription" : eventTheme ? "event" : ""}">${escapeHtml(accessLabel(theme))}</div>
       <div class="theme-preview">${createMockPreview(theme, true)}</div>
       <h3>${escapeHtml(theme.name || theme.id)}</h3>
       <p>${escapeHtml(theme.description || "Tema exclusivo conectado ao app principal.")}</p>
       <div class="feature-pills">${(visual.chips || []).slice(0, 3).map(chip => `<span>${escapeHtml(chip)}</span>`).join("")}</div>
-      ${owned ? `<span class="theme-owned">✓ ${subscription ? `Assinatura ativa${theme.expires_at ? ` até ${escapeHtml(formatDate(theme.expires_at))}` : ""}` : "Já liberado na sua conta"}</span>` : ""}
-      ${expired ? `<span class="theme-expired">Assinatura expirada — renove para usar no app</span>` : ""}
+      ${owned ? `<span class="theme-owned">✓ ${subscription ? `Assinatura ativa${theme.expires_at ? ` até ${escapeHtml(formatDate(theme.expires_at))}` : ""}` : eventTheme ? "Evento comprado • acesso permanente" : "Já liberado na sua conta"}</span>` : ""}
+      ${expired ? `<span class="theme-expired">${subscription ? "Assinatura expirada — renove para usar no app" : "Acesso expirado"}</span>` : ""}
       <div class="theme-actions">
         <button class="btn ghost" data-action="details">Ver detalhes</button>
-        <button class="btn ${owned && !canRenew ? "ghost" : "primary"}" data-action="buy" ${owned && !canRenew ? "disabled" : ""}>${canRenew ? "Renovar assinatura" : owned ? "Comprado" : subscription ? "Assinar PIX" : "Comprar PIX"}</button>
+        <button class="btn ${owned && !canRenew ? "ghost" : "primary"}" data-action="buy" ${owned && !canRenew ? "disabled" : ""}>${canRenew ? "Renovar assinatura" : owned ? (eventTheme ? "Comprado permanente" : "Comprado") : subscription ? "Assinar PIX" : eventTheme ? "Comprar evento permanente" : "Comprar PIX"}</button>
       </div>
     `;
     card.querySelector('[data-action="details"]').addEventListener("click", () => openThemeModal(theme, owned));
@@ -406,7 +416,8 @@ function openThemeModal(theme, owned = false) {
   $("modalSpecs").innerHTML = Object.entries(visual.specs || {}).map(([key, value]) => `<div><b>${escapeHtml(key)}</b><span>${escapeHtml(value)}</span></div>`).join("");
   const button = $("modalBuyBtn");
   const subscription = isSubscription(theme);
-  button.textContent = owned && subscription ? "Renovar assinatura" : owned ? "Já comprado" : subscription ? "Assinar com PIX" : "Comprar com PIX";
+  const eventTheme = isWeeklyEvent(theme);
+  button.textContent = owned && subscription ? "Renovar assinatura" : owned ? (eventTheme ? "Comprado permanente" : "Já comprado") : subscription ? "Assinar com PIX" : eventTheme ? "Comprar evento permanente" : "Comprar com PIX";
   button.disabled = owned && !subscription;
   button.onclick = () => {
     closeThemeModal();
@@ -427,10 +438,13 @@ function openPurchaseModal(theme) {
     return;
   }
   selectedTheme = theme;
-  $("purchaseTitle").textContent = `Comprar ${theme.name || theme.id}`;
+  const eventTheme = isWeeklyEvent(theme);
+  $("purchaseTitle").textContent = `${isSubscription(theme) ? "Assinar" : eventTheme ? "Comprar evento permanente" : "Comprar"} ${theme.name || theme.id}`;
   $("purchaseSubtitle").textContent = isSubscription(theme)
     ? `${theme.price_label || money(theme.price_cents)} • Assinatura de ${theme.duration_label || "30 dias"}. Depois do pagamento aprovado, você recebe comprovante, tutorial e validade no e-mail.`
-    : `${theme.price_label || money(theme.price_cents)} • O tema será liberado na sua conta após o pagamento e o comprovante chegará por e-mail.`;
+    : eventTheme
+      ? `${theme.price_label || money(theme.price_cents)} • Evento semanal por tempo limitado na loja. Depois do pagamento aprovado, o acesso fica permanente na sua conta e você recebe comprovante/tutorial por e-mail.`
+      : `${theme.price_label || money(theme.price_cents)} • O tema será liberado na sua conta após o pagamento e o comprovante chegará por e-mail.`;
   $("buyerName").value = localStorage.getItem("pcultra_theme_username") || $("username").value.trim() || "";
   $("buyerEmail").value = localStorage.getItem("pcultra_theme_email") || "";
   setMessage("purchaseMessage", "");

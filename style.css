@@ -749,3 +749,9 @@ footer strong { color: var(--text); }
   font-size: 12px;
   line-height: 1.45;
 }
+.theme-access.event {
+  color: #f8fafc;
+  border-color: color-mix(in srgb, #f8fafc, transparent 52%);
+  background: linear-gradient(135deg, rgba(248,250,252,.16), rgba(3,4,5,.16));
+  box-shadow: 0 0 26px rgba(248,250,252,.10);
+}

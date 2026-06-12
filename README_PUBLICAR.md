@@ -56,4 +56,9 @@ A tela de compra agora pede e-mail com função real: após o pagamento aprovado
 
 ## Atualização — E-mail profissional
 
-O campo de e-mail da compra agora tem função real: depois do pagamento aprovado, o usuário recebe um comprovante com código de suporte, tutorial de ativação na aba Loja de Temas, data da ativação e validade quando for assinatura/evento.
+O campo de e-mail da compra agora tem função real: depois do pagamento aprovado, o usuário recebe um comprovante com código de suporte, tutorial de ativação na aba Loja de Temas, data da ativação e validade quando for assinatura. Para evento semanal comprado, informa que o acesso é permanente mesmo após o tema sair da loja.
+
+
+## Correção Diamond Black
+
+O Diamond Black agora funciona como evento semanal de venda: aparece na loja apenas durante a janela do evento, mas quem compra recebe acesso permanente na conta. O período de 7 dias controla a disponibilidade na loja, não a validade do tema comprado.
