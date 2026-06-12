@@ -3,32 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PC Ultra Manager — Theme Store Cinema</title>
-  <meta name="description" content="Loja oficial de temas premium do PC Ultra Manager. Compre no site e receba no app principal." />
-  <meta name="theme-color" content="#030409" />
-  <link rel="stylesheet" href="style.css?v=cinema-ultra-20260612-3" />
+  <title>PC Ultra Manager — Theme Store Elite IMAX</title>
+  <meta name="description" content="Loja oficial de temas premium do PC Ultra Manager. Experiência Cinema IMAX, PIX, entrega automática, evento semanal e assinatura." />
+  <meta name="theme-color" content="#03030a" />
+  <link rel="stylesheet" href="style.css?v=elite-imax-20260612-1" />
 </head>
 <body>
   <div id="progressBar" class="progress-bar"></div>
-  <div class="noise"></div>
-  <div class="aurora aurora-a"></div>
-  <div class="aurora aurora-b"></div>
-  <div class="aurora aurora-c"></div>
+  <div class="cinema-bg" aria-hidden="true">
+    <div class="noise"></div>
+    <div class="grid-floor"></div>
+    <div class="spotlight"></div>
+    <div class="orb orb-blue"></div>
+    <div class="orb orb-gold"></div>
+    <div class="orb orb-purple"></div>
+    <div class="film-lines"></div>
+  </div>
 
-  <header class="hero hero-cinema" id="top">
-    <nav class="topbar glass" data-reveal>
+  <header class="hero hero-imax" id="top">
+    <nav class="topbar glass elite-border" data-reveal>
       <a class="brand" href="#top" aria-label="PC Ultra Manager">
-        <span class="brand-mark">PC</span>
-        <span>
+        <span class="brand-mark"><span>PC</span></span>
+        <span class="brand-text">
           <strong>PC Ultra Manager</strong>
-          <small>Theme Store Cinema</small>
+          <small>Theme Store • Elite IMAX</small>
         </span>
       </a>
       <div class="nav-links" aria-label="Navegação principal">
         <a href="#weekly-event">Evento Semanal</a>
-        <a href="#store">Loja</a>
-        <a href="#how">Como recebe</a>
+        <a href="#store">Loja Elite</a>
         <a href="#account">Conta</a>
+        <a href="#how">Como recebe</a>
       </div>
       <div class="session-pill" id="sessionPill">
         <span class="dot"></span>
@@ -39,27 +44,31 @@
 
     <section class="hero-stage">
       <div class="hero-copy" data-reveal>
-        <span class="eyebrow">Loja oficial • PIX • entrega automática</span>
-        <h1><span>Temas de cinema</span> para transformar seu app.</h1>
+        <div class="hero-badge-row">
+          <span class="eyebrow">Loja oficial conectada ao servidor</span>
+          <span class="imax-badge">IMAX EXPERIENCE</span>
+        </div>
+        <h1><span>Temas premium</span><br />com desbloqueio cinematográfico.</h1>
         <p>
-          Uma vitrine premium conectada ao servidor do PC Ultra Manager. Faça login, compre pelo PIX, receba o comprovante por e-mail e sincronize o tema direto no app.
+          Escolha o tema, pague com PIX, receba comprovante por e-mail e sincronize no app. Tudo validado no servidor, com evento semanal separado da loja normal.
         </p>
         <div class="hero-actions">
-          <a class="btn primary" href="#weekly-event">Ver evento da semana</a>
-          <a class="btn secondary" href="#store">Explorar loja</a>
-          <a class="btn ghost" href="#account">Entrar na conta</a>
+          <a class="btn primary mega" href="#weekly-event">Ver drop da semana</a>
+          <a class="btn secondary" href="#store">Entrar na Loja Elite</a>
+          <a class="btn ghost" href="#account">Conectar conta</a>
         </div>
         <div class="hero-metrics">
-          <div><b id="metricThemes">3</b><span>temas na loja</span></div>
+          <div><b id="metricThemes">0</b><span>temas na loja principal</span></div>
           <div><b>PIX</b><span>QR Code + copia e cola</span></div>
-          <div><b>Conta única</b><span>site e app</span></div>
+          <div><b>100%</b><span>entrega por servidor</span></div>
         </div>
       </div>
 
-      <div class="cinema-preview glass" data-reveal>
+      <div class="cinema-preview glass elite-border" data-reveal>
+        <div class="preview-glow-ring"></div>
         <div class="preview-topline">
-          <span id="previewThemeName">Windows 11 Pro Glass</span>
-          <i id="previewPrice">R$ 9,90</i>
+          <span id="previewThemeName">Carregando tema...</span>
+          <i id="previewPrice">R$ --</i>
         </div>
         <div class="mock-app mock-hero" id="heroMock">
           <div class="mock-sidebar"><span></span><span></span><span></span><span></span></div>
@@ -73,19 +82,71 @@
         </div>
         <div class="preview-caption">
           <span class="pulse"></span>
-          <span>Prévia viva do tema — escolha, pague e desbloqueie no app</span>
+          <span>Prévia viva • pagamento seguro • tema liberado no app</span>
         </div>
       </div>
     </section>
   </header>
 
   <main>
-    <section id="account" class="section account-shell glass" data-reveal>
-      <div class="section-head">
+    <section id="weekly-event" class="section weekly-event-shell elite-section" data-reveal>
+      <div class="section-head event-head">
         <span class="section-number">01</span>
         <div>
+          <h2>Evento Semanal Elite</h2>
+          <p>Um tema exclusivo entra em cartaz por 7 dias. Ele não aparece na loja normal. Quem compra durante o drop mantém acesso permanente.</p>
+        </div>
+      </div>
+      <div class="weekly-panel weekly-premium-panel glass elite-border">
+        <div class="weekly-info weekly-copy-card">
+          <span class="theme-kicker weekly-kicker">Drop exclusivo da semana</span>
+          <h3><span>Em cartaz agora</span><b id="weeklyTitle">Carregando...</b></h3>
+          <p id="weeklyDescription">Buscando o tema semanal ativo no servidor.</p>
+          <div class="weekly-countdown" aria-label="Contador do evento semanal">
+            <div><small>Tempo restante</small><strong id="weeklyCountdown">--</strong></div>
+            <span id="weeklyPriceHero">R$ 2,50</span>
+          </div>
+          <div class="weekly-meta weekly-premium-meta">
+            <span id="weeklyWindow">Troca toda segunda-feira</span>
+            <span id="weeklyPool">Rotação automática entre 5 temas</span>
+            <span>Compra permanente após aprovação</span>
+          </div>
+          <div class="weekly-rotation-preview" id="weeklyRotationPreview" aria-label="Temas da rotação semanal">
+            <span>Carregando rotação...</span>
+            <div class="rotation-dots"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div id="weeklyEventGrid" class="weekly-event-grid weekly-showcase-zone">
+          <article class="weekly-loading-card glass"><h3>Carregando evento...</h3><p>Conectando ao servidor.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="store" class="section store-elite" data-reveal>
+      <div class="section-head store-head">
+        <span class="section-number">02</span>
+        <div>
+          <h2>Loja Elite</h2>
+          <p>Temas normais e assinaturas ficam aqui. Os drops de Evento Semanal ficam exclusivamente na vitrine de evento acima.</p>
+        </div>
+      </div>
+      <div class="store-panel glass elite-border">
+        <div class="search-row">
+          <div class="search-box"><span>⌕</span><input id="searchInput" placeholder="Buscar tema, efeito, categoria..." /></div>
+          <button id="reloadStoreBtn" class="btn ghost">Atualizar loja</button>
+          <button id="myThemesBtn" class="btn secondary">Meus temas</button>
+        </div>
+        <div class="chips" id="categoryChips"></div>
+      </div>
+      <div id="themesGrid" class="themes-grid"></div>
+    </section>
+
+    <section id="account" class="section account-shell glass elite-border" data-reveal>
+      <div class="section-head">
+        <span class="section-number">03</span>
+        <div>
           <h2>Conta conectada</h2>
-          <p>Use o mesmo usuário e senha do app. O site apenas solicita; login, PIX, pagamento e entrega ficam no servidor oficial.</p>
+          <p>Entre com a mesma conta do app. O tema é liberado no usuário logado, não no navegador.</p>
         </div>
       </div>
       <div class="account-grid">
@@ -97,62 +158,10 @@
       <p class="message" id="loginMessage"></p>
     </section>
 
-    <section id="weekly-event" class="section weekly-event-shell" data-reveal>
-      <div class="section-head store-head">
-        <span class="section-number">02</span>
-        <div>
-          <h2>Evento Semanal</h2>
-          <p>Um drop exclusivo por semana. O tema aparece somente aqui, muda automaticamente toda segunda-feira e quem comprar mantém acesso permanente na conta.</p>
-        </div>
-      </div>
-      <div class="weekly-panel weekly-premium-panel glass">
-        <div class="weekly-info weekly-copy-card">
-          <span class="theme-kicker weekly-kicker">Drop exclusivo da semana</span>
-          <h3><span>Disponível agora</span><b id="weeklyTitle">Carregando...</b></h3>
-          <p id="weeklyDescription">Buscando o tema semanal ativo no servidor.</p>
-          <div class="weekly-countdown" aria-label="Contador do evento semanal">
-            <div><small>Tempo restante</small><strong id="weeklyCountdown">--</strong></div>
-            <span id="weeklyPriceHero">R$ 2,50</span>
-          </div>
-          <div class="weekly-meta weekly-premium-meta">
-            <span id="weeklyWindow">Troca toda segunda-feira</span>
-            <span id="weeklyPool">Rotação automática entre 5 temas</span>
-            <span>Quem compra mantém para sempre</span>
-          </div>
-          <div class="weekly-rotation-preview" id="weeklyRotationPreview" aria-label="Temas da rotação semanal">
-            <span>Rotação da coleção</span>
-            <div class="rotation-dots"><i></i><i></i><i></i><i></i><i></i></div>
-          </div>
-        </div>
-        <div id="weeklyEventGrid" class="weekly-event-grid weekly-showcase-zone">
-          <article class="weekly-loading-card"><h3>Carregando evento...</h3><p>Conectando ao servidor.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section id="store" class="section" data-reveal>
-      <div class="section-head store-head">
-        <span class="section-number">03</span>
-        <div>
-          <h2>Loja principal</h2>
-          <p>Temas normais ficam aqui. Temas de Evento Semanal não aparecem nesta grade; eles ficam somente no drop semanal acima.</p>
-        </div>
-      </div>
-      <div class="store-panel glass">
-        <div class="search-row">
-          <div class="search-box"><span>⌕</span><input id="searchInput" placeholder="Buscar tema, efeito, categoria..." /></div>
-          <button id="reloadStoreBtn" class="btn ghost">Atualizar loja</button>
-          <button id="myThemesBtn" class="btn secondary">Meus temas</button>
-        </div>
-        <div class="chips" id="categoryChips"></div>
-      </div>
-      <div id="themesGrid" class="themes-grid"></div>
-    </section>
-
-    <section id="payment" class="section payment-shell glass hidden" data-reveal>
+    <section id="payment" class="section payment-shell glass elite-border hidden" data-reveal>
       <div class="section-head">
         <span class="section-number">04</span>
-        <div><h2>Pagamento PIX</h2><p>Escaneie o QR Code ou copie o PIX. Depois verifique o pagamento para liberar o tema.</p></div>
+        <div><h2>Pagamento PIX</h2><p>Escaneie o QR Code ou copie o PIX. Após aprovação, o tema é liberado e o e-mail recebe comprovante + tutorial.</p></div>
       </div>
       <div class="payment-grid">
         <div class="payment-copy">
@@ -175,17 +184,17 @@
     </section>
 
     <section id="how" class="section how-grid" data-reveal>
-      <article class="how-card glass"><span>1</span><h3>Compra no site</h3><p>Escolha o tema, informe nome/e-mail e gere o PIX pelo servidor.</p></article>
-      <article class="how-card glass"><span>2</span><h3>Pagamento validado</h3><p>Mercado Pago confirma e o servidor entrega o acesso real na sua conta.</p></article>
-      <article class="how-card glass"><span>3</span><h3>Recebe no app</h3><p>No app, abra Loja de Temas, clique em Sincronizar compras e aplique.</p></article>
+      <article class="how-card glass elite-border"><span>1</span><h3>Escolha</h3><p>Veja o drop semanal ou compre na loja principal.</p></article>
+      <article class="how-card glass elite-border"><span>2</span><h3>Pague no PIX</h3><p>O servidor gera QR Code e acompanha o status.</p></article>
+      <article class="how-card glass elite-border"><span>3</span><h3>Ative no app</h3><p>Abra Loja de Temas, sincronize compras e aplique.</p></article>
     </section>
   </main>
 
-  <footer><strong>PC Ultra Manager Theme Store</strong><span>Site estático. Login, PIX e entrega são processados no servidor oficial.</span></footer>
+  <footer><strong>PC Ultra Manager Theme Store</strong><span>Elite IMAX • Site estático conectado ao servidor oficial.</span></footer>
 
   <div id="themeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-backdrop" data-close-modal></div>
-    <div class="modal-card glass">
+    <div class="modal-card glass elite-border">
       <button class="modal-close" data-close-modal aria-label="Fechar">×</button>
       <div class="modal-grid">
         <div>
@@ -205,21 +214,21 @@
 
   <div id="purchaseModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="purchaseTitle">
     <div class="modal-backdrop" data-close-purchase></div>
-    <div class="modal-card purchase-card glass">
+    <div class="purchase-card glass elite-border">
       <button class="modal-close" data-close-purchase aria-label="Fechar">×</button>
-      <span class="theme-kicker">Mercado Pago PIX</span>
-      <h2 id="purchaseTitle">Finalizar compra</h2>
-      <p id="purchaseSubtitle">Preencha seus dados para gerar o PIX. O e-mail receberá comprovante, tutorial e validade da assinatura.</p>
+      <span class="theme-kicker">Desbloqueio por PIX</span>
+      <h2 id="purchaseTitle">Comprar tema</h2>
+      <p id="purchaseSubtitle">Após o pagamento, o servidor libera o tema na sua conta.</p>
       <div class="purchase-form">
-        <label>Nome para o pedido<input id="buyerName" placeholder="Seu nome" /></label>
-        <label>E-mail para comprovante e emergência<input id="buyerEmail" type="email" placeholder="seuemail@gmail.com" required /><small>Depois do pagamento aprovado, enviaremos comprovante, tutorial de ativação, data da assinatura e validade quando houver.</small></label>
-        <button id="confirmPurchaseBtn" class="btn primary">Gerar QR Code PIX</button>
+        <label>Nome para o comprovante<input id="buyerName" placeholder="Seu nome" /></label>
+        <label>E-mail do comprovante<input id="buyerEmail" type="email" placeholder="seuemail@gmail.com" /><small>Recebe comprovante, tutorial, data da compra e validade quando houver.</small></label>
+        <button id="confirmPurchaseBtn" class="btn primary mega">Gerar QR Code PIX</button>
       </div>
       <p id="purchaseMessage" class="message"></p>
     </div>
   </div>
 
   <div id="toastHost" class="toast-host"></div>
-  <script src="script.js?v=cinema-ultra-20260612-3"></script>
+  <script src="script.js?v=elite-imax-20260612-1"></script>
 </body>
 </html>

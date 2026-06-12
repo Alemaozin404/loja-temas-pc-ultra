@@ -1,22 +1,23 @@
-SITE LOJA DE TEMAS — VISUAL CINEMA ULTRA
+# PC Ultra Manager — Loja de Temas Elite IMAX
 
-Arquivos do site:
+Versão visual totalmente reformulada da loja de temas.
+
+## O que foi alterado
+
+- Visual geral refeito em nível Cinema/IMAX.
+- Hero principal mais forte e comercial.
+- Evento Semanal transformado em vitrine premium.
+- Loja normal separada do Evento Semanal.
+- Animações, glow, spotlight, vidro, bordas premium e microinterações.
+- Mantida a integração existente com servidor, login, PIX, e-mail e liberação no app.
+
+## Como publicar
+
+Suba na raiz do repositório da loja:
+
 - index.html
 - style.css
 - script.js
 - README_PUBLICAR.md
 
-Atualização:
-- Visual geral reformulado em nível cinema/premium.
-- Evento Semanal virou vitrine de destaque, com hero próprio, contador, preço forte, compra permanente e rotação visual.
-- Loja normal continua separada dos temas semanais.
-- Index usa cache-bust em style.css/script.js para evitar o navegador mostrar a versão antiga.
-
-Publicação:
-1. Entre no repositório loja-temas-pc-ultra.
-2. Substitua index.html, style.css, script.js e README_PUBLICAR.md.
-3. Aguarde o GitHub Pages atualizar.
-4. Abra o site e pressione Ctrl + F5.
-
-Observação:
-Este pacote é apenas do site. Não coloque arquivos do servidor aqui.
+Depois aguarde o GitHub Pages atualizar e use Ctrl + F5 no navegador.
