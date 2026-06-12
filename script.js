@@ -429,8 +429,8 @@ function openPurchaseModal(theme) {
   selectedTheme = theme;
   $("purchaseTitle").textContent = `Comprar ${theme.name || theme.id}`;
   $("purchaseSubtitle").textContent = isSubscription(theme)
-    ? `${theme.price_label || money(theme.price_cents)} • Assinatura de ${theme.duration_label || "30 dias"}. Depois precisa renovar para continuar usando.`
-    : `${theme.price_label || money(theme.price_cents)} • O tema será liberado na sua conta após o pagamento.`;
+    ? `${theme.price_label || money(theme.price_cents)} • Assinatura de ${theme.duration_label || "30 dias"}. Depois do pagamento aprovado, você recebe comprovante, tutorial e validade no e-mail.`
+    : `${theme.price_label || money(theme.price_cents)} • O tema será liberado na sua conta após o pagamento e o comprovante chegará por e-mail.`;
   $("buyerName").value = localStorage.getItem("pcultra_theme_username") || $("username").value.trim() || "";
   $("buyerEmail").value = localStorage.getItem("pcultra_theme_email") || "";
   setMessage("purchaseMessage", "");
@@ -454,7 +454,7 @@ function showPayment(payload) {
   const theme = payload.theme || payload?.order || selectedTheme || {};
   $("payment").classList.remove("hidden");
   $("paymentThemeName").textContent = theme.name || theme.theme_name || "Pedido de tema";
-  $("paymentStatus").textContent = payload.message || "Pedido criado. Pague o PIX para liberar o tema.";
+  $("paymentStatus").textContent = payload.message || "Pedido criado. Pague o PIX para liberar o tema. Após aprovação, o comprovante e o tutorial chegam no e-mail informado.";
   $("paymentStatusBadge").textContent = "PIX gerado";
 
   const pix = extractPix(payload);
@@ -478,6 +478,11 @@ async function confirmPurchase() {
   if (!selectedTheme) return;
   const buyerName = $("buyerName").value.trim() || localStorage.getItem("pcultra_theme_username") || "Cliente";
   const buyerEmail = $("buyerEmail").value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) {
+    setMessage("purchaseMessage", "Informe um e-mail válido para receber comprovante, tutorial e validade.", "error");
+    toast("Informe um e-mail válido.", "error");
+    return;
+  }
   try {
     setMessage("purchaseMessage", "Criando QR Code PIX...");
     const order = await apiRequest("/themes/purchase", {

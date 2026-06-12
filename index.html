@@ -45,7 +45,7 @@
           Temas premium com entrega automática no app.
         </h1>
         <p>
-          Faça login com a mesma conta do PC Ultra Manager, compre pelo PIX e desbloqueie o tema na Galeria do app principal.
+          Faça login com a mesma conta do PC Ultra Manager, compre pelo PIX e receba o tema no app. Após o pagamento, o e-mail informado recebe comprovante, tutorial e validade da assinatura.
         </p>
         <div class="hero-actions">
           <a class="btn primary" href="#store">Explorar temas</a>
@@ -163,7 +163,7 @@
       <article class="how-card glass">
         <span>1</span>
         <h3>Compra no site</h3>
-        <p>Você escolhe um tema, coloca nome/e-mail e o servidor gera o PIX.</p>
+        <p>Você escolhe um tema, informa nome/e-mail e o servidor gera o PIX com segurança.</p>
       </article>
       <article class="how-card glass">
         <span>2</span>
@@ -215,15 +215,16 @@
       <button class="modal-close" data-close-purchase aria-label="Fechar">×</button>
       <span class="theme-kicker">Mercado Pago PIX</span>
       <h2 id="purchaseTitle">Finalizar compra</h2>
-      <p id="purchaseSubtitle">Preencha seus dados para gerar o PIX.</p>
+      <p id="purchaseSubtitle">Preencha seus dados para gerar o PIX. O e-mail receberá comprovante, tutorial e validade da assinatura.</p>
       <div class="purchase-form">
         <label>
           Nome para o pedido
           <input id="buyerName" placeholder="Seu nome" />
         </label>
         <label>
-          E-mail para o PIX
-          <input id="buyerEmail" type="email" placeholder="seuemail@gmail.com" />
+          E-mail para comprovante e emergência
+          <input id="buyerEmail" type="email" placeholder="seuemail@gmail.com" required />
+          <small>Depois do pagamento aprovado, enviaremos o comprovante, tutorial de ativação, data da assinatura e validade.</small>
         </label>
         <button id="confirmPurchaseBtn" class="btn primary">Gerar QR Code PIX</button>
       </div>

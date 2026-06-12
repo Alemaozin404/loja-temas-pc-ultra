@@ -48,3 +48,8 @@ localStorage.setItem("pcultra_api_url", "https://seu-servidor.onrender.com")
 ```
 
 Depois recarregue a página.
+
+
+## E-mail após pagamento
+
+A tela de compra agora pede e-mail com função real: após o pagamento aprovado, o servidor envia comprovante, tutorial de ativação, agradecimento, data da assinatura e validade quando o tema for assinatura, como Matrix Effect.
