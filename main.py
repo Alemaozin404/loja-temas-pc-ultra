@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import hmac
 import os
 import re
 import secrets
 import json
+import smtplib
+import ssl
 import urllib.request
 import urllib.error
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from email.message import EmailMessage
+from email.utils import formataddr
 from typing import Any, Dict, Optional, Tuple
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
@@ -112,6 +117,24 @@ PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").strip().rstrip("/")
 if not PUBLIC_BASE_URL and not IS_PRODUCTION:
     PUBLIC_BASE_URL = "http://localhost:8000"
 
+# E-mail transacional: usado para comprovante, tutorial e validade após pagamento aprovado.
+# Não bloqueia o servidor se não estiver configurado. Em produção, configure SMTP_* no Render.
+EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "false").strip().lower() in {"1", "true", "yes", "sim"}
+SMTP_HOST = os.getenv("SMTP_HOST", "").strip()
+try:
+    SMTP_PORT = int(os.getenv("SMTP_PORT", "465"))
+except ValueError:
+    raise RuntimeError("[CONFIG] SMTP_PORT precisa ser um número inteiro.")
+SMTP_USERNAME = os.getenv("SMTP_USERNAME", "").strip()
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
+SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", SMTP_USERNAME).strip()
+SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "PC Ultra Manager").strip() or "PC Ultra Manager"
+SMTP_SUPPORT_EMAIL = os.getenv("SMTP_SUPPORT_EMAIL", SMTP_FROM_EMAIL).strip()
+SMTP_USE_SSL_VALUE = os.getenv("SMTP_USE_SSL", "auto").strip().lower()
+SMTP_USE_STARTTLS_VALUE = os.getenv("SMTP_USE_STARTTLS", "auto").strip().lower()
+SMTP_USE_SSL = (SMTP_PORT == 465) if SMTP_USE_SSL_VALUE in {"", "auto"} else SMTP_USE_SSL_VALUE in {"1", "true", "yes", "sim"}
+SMTP_USE_STARTTLS = (not SMTP_USE_SSL) if SMTP_USE_STARTTLS_VALUE in {"", "auto"} else SMTP_USE_STARTTLS_VALUE in {"1", "true", "yes", "sim"}
+
 APP_LATEST_VERSION = os.getenv("APP_LATEST_VERSION", "4.1.1-security-env").strip()
 APP_CHANNEL = os.getenv("APP_CHANNEL", "Acesso Antecipado Beta RC3").strip()
 APP_DOWNLOAD_URL = os.getenv("APP_DOWNLOAD_URL", "").strip()
@@ -124,6 +147,10 @@ require_config(bool(ADMIN_USERNAME), "ADMIN_USERNAME é obrigatório.")
 require_config(bool(ADMIN_PASSWORD), "ADMIN_PASSWORD é obrigatório.")
 require_config(bool(JWT_SECRET), "JWT_SECRET é obrigatório.")
 require_config(payer_domain_is_valid(MERCADOPAGO_PAYER_EMAIL_DOMAIN), "MERCADOPAGO_PAYER_EMAIL_DOMAIN precisa ser um domínio público válido, exemplo: pcultramanager.com.br.")
+if EMAIL_ENABLED:
+    require_config(bool(SMTP_HOST), "SMTP_HOST é obrigatório quando EMAIL_ENABLED=true.")
+    require_config(SMTP_PORT > 0, "SMTP_PORT precisa ser válido quando EMAIL_ENABLED=true.")
+    require_config(bool(SMTP_FROM_EMAIL) and re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", SMTP_FROM_EMAIL), "SMTP_FROM_EMAIL precisa ser um e-mail válido quando EMAIL_ENABLED=true.")
 
 if IS_PRODUCTION:
     require_config(not DATABASE_URL.startswith("sqlite"), "DATABASE_URL não pode ser SQLite em produção. Use PostgreSQL.")
@@ -242,6 +269,9 @@ orders = Table(
     Column("duration_minutes", Integer, nullable=True),
     Column("permanent", Boolean, nullable=False, default=False),
     Column("price_cents", Integer, nullable=False),
+    Column("access_type", String(30), nullable=False, default="one_time"),
+    Column("duration_days", Integer, nullable=True),
+    Column("access_expires_at", DateTime(timezone=True), nullable=True),
     Column("status", String(30), nullable=False, default="pending"),
     Column("user_message", Text, nullable=True),
     Column("admin_message", Text, nullable=True),
@@ -347,6 +377,9 @@ themes = Table(
     Column("preview_url", Text, nullable=True),
     Column("accent_color", String(40), nullable=True),
     Column("category", String(80), nullable=False, default="premium"),
+    Column("access_type", String(30), nullable=False, default="one_time"),
+    Column("duration_days", Integer, nullable=True),
+    Column("duration_label", String(80), nullable=True),
     Column("is_active", Boolean, nullable=False, default=True),
     Column("created_by", Integer, ForeignKey("users.id"), nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False, default=lambda: now_utc()),
@@ -361,9 +394,14 @@ theme_orders = Table(
     Column("theme_id", String(80), ForeignKey("themes.id"), nullable=False),
     Column("theme_name", String(120), nullable=False),
     Column("price_cents", Integer, nullable=False),
+    Column("access_type", String(30), nullable=False, default="one_time"),
+    Column("duration_days", Integer, nullable=True),
+    Column("access_expires_at", DateTime(timezone=True), nullable=True),
     Column("status", String(30), nullable=False, default="pending"),
     Column("buyer_name", String(120), nullable=True),
     Column("buyer_email", String(180), nullable=True),
+    Column("receipt_email_sent_at", DateTime(timezone=True), nullable=True),
+    Column("receipt_email_error", Text, nullable=True),
     Column("admin_message", Text, nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False, default=lambda: now_utc()),
     Column("delivered_at", DateTime(timezone=True), nullable=True),
@@ -389,6 +427,8 @@ user_themes = Table(
     Column("granted_by", Integer, ForeignKey("users.id"), nullable=True),
     Column("note", Text, nullable=True),
     Column("purchased_at", DateTime(timezone=True), nullable=False, default=lambda: now_utc()),
+    Column("expires_at", DateTime(timezone=True), nullable=True),
+    Column("status", String(30), nullable=False, default="active"),
 )
 
 
@@ -401,6 +441,9 @@ DEFAULT_THEME_CATALOG = [
         "preview_url": "",
         "accent_color": "#0078D4",
         "category": "premium",
+        "access_type": "one_time",
+        "duration_days": None,
+        "duration_label": "Vitalício",
         "is_active": True,
     },
     {
@@ -411,6 +454,9 @@ DEFAULT_THEME_CATALOG = [
         "preview_url": "",
         "accent_color": "#B99A5B",
         "category": "cinema",
+        "access_type": "one_time",
+        "duration_days": None,
+        "duration_label": "Vitalício",
         "is_active": True,
     },
     {
@@ -421,6 +467,9 @@ DEFAULT_THEME_CATALOG = [
         "preview_url": "",
         "accent_color": "#7DD3FC",
         "category": "glass",
+        "access_type": "one_time",
+        "duration_days": None,
+        "duration_label": "Vitalício",
         "is_active": True,
     },
     {
@@ -431,16 +480,22 @@ DEFAULT_THEME_CATALOG = [
         "preview_url": "",
         "accent_color": "#F8FAFC",
         "category": "evento semanal",
+        "access_type": "one_time",
+        "duration_days": None,
+        "duration_label": "Vitalício",
         "is_active": True,
     },
     {
         "id": "matrix_effect_subscription",
         "name": "Matrix Effect",
-        "description": "Tema estilo Matrix com chuva de códigos, brilho verde digital, atmosfera hacker/cyber e efeito visual de terminal futurista. Marcado como assinatura/teste por R$ 0,50.",
+        "description": "Tema estilo Matrix com chuva de códigos, brilho verde digital, atmosfera hacker/cyber e efeito visual de terminal futurista. Assinatura mensal: custa R$ 0,50 e precisa renovar a cada 30 dias.",
         "price_cents": 50,
         "preview_url": "",
         "accent_color": "#00FF66",
         "category": "assinatura",
+        "access_type": "subscription",
+        "duration_days": 30,
+        "duration_label": "30 dias",
         "is_active": True,
     },
 ]
@@ -945,6 +1000,9 @@ class ThemeCreateRequest(BaseModel):
     preview_url: Optional[str] = None
     accent_color: Optional[str] = Field(default=None, max_length=40)
     category: str = Field(default="premium", max_length=80)
+    access_type: str = Field(default="one_time", max_length=30)
+    duration_days: Optional[int] = Field(default=None, ge=1, le=3650)
+    duration_label: Optional[str] = Field(default=None, max_length=80)
     is_active: bool = True
 
 
@@ -983,6 +1041,22 @@ def ensure_schema_updates() -> None:
             "ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_ticket_url TEXT",
             "ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_created_at TIMESTAMP WITH TIME ZONE",
             "ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_paid_at TIMESTAMP WITH TIME ZONE",
+            "ALTER TABLE themes ADD COLUMN IF NOT EXISTS access_type VARCHAR(30) DEFAULT 'one_time'",
+            "ALTER TABLE themes ADD COLUMN IF NOT EXISTS duration_days INTEGER",
+            "ALTER TABLE themes ADD COLUMN IF NOT EXISTS duration_label VARCHAR(80)",
+            "ALTER TABLE theme_orders ADD COLUMN IF NOT EXISTS access_type VARCHAR(30) DEFAULT 'one_time'",
+            "ALTER TABLE theme_orders ADD COLUMN IF NOT EXISTS duration_days INTEGER",
+            "ALTER TABLE theme_orders ADD COLUMN IF NOT EXISTS access_expires_at TIMESTAMP WITH TIME ZONE",
+            "ALTER TABLE theme_orders ADD COLUMN IF NOT EXISTS receipt_email_sent_at TIMESTAMP WITH TIME ZONE",
+            "ALTER TABLE theme_orders ADD COLUMN IF NOT EXISTS receipt_email_error TEXT",
+            "ALTER TABLE user_themes ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE",
+            "ALTER TABLE user_themes ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'active'",
+            "UPDATE themes SET access_type = 'one_time' WHERE access_type IS NULL",
+            "UPDATE themes SET duration_label = 'Vitalício' WHERE duration_label IS NULL AND COALESCE(access_type, 'one_time') <> 'subscription'",
+            "UPDATE themes SET access_type = 'subscription', duration_days = 30, duration_label = '30 dias', category = 'assinatura', price_cents = 50 WHERE id = 'matrix_effect_subscription'",
+            "UPDATE themes SET access_type = 'one_time', duration_days = NULL, duration_label = 'Vitalício', category = 'evento semanal', price_cents = 250 WHERE id = 'diamond_black_event'",
+            "UPDATE user_themes SET status = 'active' WHERE status IS NULL",
+            "UPDATE user_themes SET expires_at = purchased_at + INTERVAL '30 days' WHERE theme_id = 'matrix_effect_subscription' AND expires_at IS NULL",
         ]
         with engine.begin() as conn:
             for statement in statements:
@@ -1012,6 +1086,35 @@ def ensure_schema_updates() -> None:
             for col, ddl in order_columns.items():
                 if col not in order_existing:
                     conn.execute(text(f"ALTER TABLE orders ADD COLUMN {col} {ddl}"))
+
+            def add_missing(table_name: str, columns: Dict[str, str]) -> None:
+                existing_cols = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table_name})")).fetchall()}
+                for col, ddl in columns.items():
+                    if col not in existing_cols:
+                        conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {col} {ddl}"))
+
+            add_missing("themes", {
+                "access_type": "VARCHAR(30) DEFAULT 'one_time'",
+                "duration_days": "INTEGER",
+                "duration_label": "VARCHAR(80)",
+            })
+            add_missing("theme_orders", {
+                "access_type": "VARCHAR(30) DEFAULT 'one_time'",
+                "duration_days": "INTEGER",
+                "access_expires_at": "DATETIME",
+                "receipt_email_sent_at": "DATETIME",
+                "receipt_email_error": "TEXT",
+            })
+            add_missing("user_themes", {
+                "expires_at": "DATETIME",
+                "status": "VARCHAR(30) DEFAULT 'active'",
+            })
+            conn.execute(text("UPDATE themes SET access_type = 'one_time' WHERE access_type IS NULL"))
+            conn.execute(text("UPDATE themes SET duration_label = 'Vitalício' WHERE duration_label IS NULL AND COALESCE(access_type, 'one_time') <> 'subscription'"))
+            conn.execute(text("UPDATE themes SET access_type = 'subscription', duration_days = 30, duration_label = '30 dias', category = 'assinatura', price_cents = 50 WHERE id = 'matrix_effect_subscription'"))
+            conn.execute(text("UPDATE themes SET access_type = 'one_time', duration_days = NULL, duration_label = 'Vitalício', category = 'evento semanal', price_cents = 250 WHERE id = 'diamond_black_event'"))
+            conn.execute(text("UPDATE user_themes SET status = 'active' WHERE status IS NULL"))
+            conn.execute(text("UPDATE user_themes SET expires_at = datetime(purchased_at, '+30 days') WHERE theme_id = 'matrix_effect_subscription' AND expires_at IS NULL"))
 
 
 def init_db() -> None:
@@ -1084,8 +1187,30 @@ def init_db() -> None:
                         preview_url=theme.get("preview_url"),
                         accent_color=theme.get("accent_color"),
                         category=theme.get("category") or "premium",
+                        access_type=theme.get("access_type") or "one_time",
+                        duration_days=theme.get("duration_days"),
+                        duration_label=theme.get("duration_label"),
                         is_active=bool(theme.get("is_active", True)),
                         created_at=now_utc(),
+                    )
+                )
+            else:
+                # Mantém o catálogo embutido atualizado sem apagar compras dos usuários.
+                conn.execute(
+                    update(themes)
+                    .where(themes.c.id == theme["id"])
+                    .values(
+                        name=theme["name"],
+                        description=theme.get("description"),
+                        price_cents=int(theme.get("price_cents") or 0),
+                        preview_url=theme.get("preview_url"),
+                        accent_color=theme.get("accent_color"),
+                        category=theme.get("category") or "premium",
+                        access_type=theme.get("access_type") or "one_time",
+                        duration_days=theme.get("duration_days"),
+                        duration_label=theme.get("duration_label"),
+                        is_active=bool(theme.get("is_active", True)),
+                        updated_at=now_utc(),
                     )
                 )
 
@@ -1878,6 +2003,181 @@ def valid_email_or_technical(email: Optional[str], fallback_name: str = "beta") 
     return f"{local[:36]}.{secrets.token_hex(3)}@{domain}"
 
 
+def is_valid_public_email(email: Optional[str]) -> bool:
+    return bool(re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", str(email or "").strip().lower()))
+
+
+def transactional_email_configured() -> bool:
+    return bool(EMAIL_ENABLED and SMTP_HOST and SMTP_FROM_EMAIL)
+
+
+def format_money_br(cents: Any) -> str:
+    try:
+        return price_label(int(cents or 0))
+    except Exception:
+        return "R$ 0,00"
+
+
+def format_dt_br(value: Any) -> str:
+    dt = normalize_dt(value)
+    if not dt:
+        return "Não informado"
+    br_tz = timezone(timedelta(hours=-3), "BRT")
+    return dt.astimezone(br_tz).strftime("%d/%m/%Y às %H:%M") + " (horário de Brasília)"
+
+
+def send_transactional_email(to_email: str, subject: str, text_body: str, html_body: Optional[str] = None) -> Tuple[bool, str]:
+    if not transactional_email_configured():
+        return False, "SMTP não configurado. Defina EMAIL_ENABLED=true e SMTP_* no Render."
+    if not is_valid_public_email(to_email):
+        return False, "E-mail do comprador inválido."
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = formataddr((SMTP_FROM_NAME, SMTP_FROM_EMAIL))
+    msg["To"] = to_email
+    if SMTP_SUPPORT_EMAIL and is_valid_public_email(SMTP_SUPPORT_EMAIL):
+        msg["Reply-To"] = SMTP_SUPPORT_EMAIL
+    msg.set_content(text_body)
+    if html_body:
+        msg.add_alternative(html_body, subtype="html")
+
+    try:
+        if SMTP_USE_SSL:
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=30) as smtp:
+                if SMTP_USERNAME:
+                    smtp.login(SMTP_USERNAME, SMTP_PASSWORD)
+                smtp.send_message(msg)
+        else:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as smtp:
+                if SMTP_USE_STARTTLS:
+                    smtp.starttls(context=ssl.create_default_context())
+                if SMTP_USERNAME:
+                    smtp.login(SMTP_USERNAME, SMTP_PASSWORD)
+                smtp.send_message(msg)
+        return True, "E-mail enviado com sucesso."
+    except Exception as exc:
+        return False, f"Falha ao enviar e-mail: {str(exc)[:500]}"
+
+
+def build_theme_receipt_email(order: Dict[str, Any], username: str) -> Tuple[str, str, str]:
+    theme_name = str(order.get("theme_name") or order.get("theme_id") or "Tema")
+    buyer_name = str(order.get("buyer_name") or username or "cliente").strip() or "cliente"
+    order_id = order.get("id")
+    payment_id = order.get("payment_id") or "Não informado"
+    access_type = str(order.get("access_type") or "one_time").casefold()
+    is_subscription = access_type == "subscription"
+    started_at = order.get("delivered_at") or order.get("payment_paid_at") or now_utc()
+    expires_at = order.get("access_expires_at")
+    validity = format_dt_br(expires_at) if is_subscription else "Vitalício"
+    title_type = "Assinatura ativada" if is_subscription else "Tema liberado"
+    subject = f"{title_type}: {theme_name} — PC Ultra Manager"
+    h_theme_name = html.escape(theme_name)
+    h_buyer_name = html.escape(buyer_name)
+    h_username = html.escape(str(username or ""))
+    h_payment_id = html.escape(str(payment_id or ""))
+    h_validity = html.escape(str(validity or ""))
+    h_started_at = html.escape(format_dt_br(started_at))
+    h_value = html.escape(format_money_br(order.get('price_cents')))
+    h_type = html.escape('Assinatura mensal' if is_subscription else 'Compra vitalícia')
+
+    text_body = f"""Olá, {buyer_name}!
+
+Seu pagamento foi aprovado e o tema foi liberado na sua conta do PC Ultra Manager.
+
+COMPROVANTE PARA EMERGÊNCIAS
+Pedido: #{order_id}
+Tema: {theme_name}
+Conta do app/site: {username}
+Valor: {format_money_br(order.get('price_cents'))}
+Tipo: {'Assinatura mensal' if is_subscription else 'Compra vitalícia'}
+Status: aprovado e entregue
+ID do pagamento: {payment_id}
+Data da ativação: {format_dt_br(started_at)}
+Validade: {validity}
+
+COMO ATIVAR O TEMA NO APP
+1. Abra o PC Ultra Manager.
+2. Faça login com a mesma conta usada na compra: {username}.
+3. Entre em Galeria de Temas.
+4. Clique em Sincronizar compras.
+5. Selecione o tema {theme_name} e clique em Ativar/Aplicar.
+
+IMPORTANTE
+Guarde este e-mail. Ele serve como comprovante em caso de emergência, suporte, troca de dispositivo ou dúvida sobre validade da assinatura.
+
+Obrigado por apoiar o PC Ultra Manager. Sua compra ajuda a manter o projeto vivo, mais bonito e mais forte.
+
+PC Ultra Manager
+"""
+
+    html_body = f"""
+<!doctype html>
+<html lang="pt-BR">
+<body style="margin:0;background:#05070d;color:#f8fafc;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:720px;margin:0 auto;padding:28px;">
+    <div style="border:1px solid rgba(248,250,252,.20);border-radius:24px;padding:28px;background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(2,6,23,.96));box-shadow:0 24px 60px rgba(0,0,0,.45);">
+      <p style="margin:0 0 8px;color:#93c5fd;font-size:13px;letter-spacing:.12em;text-transform:uppercase;">PC Ultra Manager</p>
+      <h1 style="margin:0 0 10px;font-size:28px;">{html.escape(title_type)}: {h_theme_name}</h1>
+      <p style="margin:0 0 22px;color:#cbd5e1;line-height:1.6;">Olá, {h_buyer_name}. Seu pagamento foi aprovado e o tema foi liberado na sua conta.</p>
+
+      <div style="border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:18px;margin:18px 0;background:rgba(255,255,255,.05);">
+        <h2 style="margin:0 0 12px;font-size:18px;">Comprovante para emergências</h2>
+        <p><b>Pedido:</b> #{order_id}</p>
+        <p><b>Tema:</b> {h_theme_name}</p>
+        <p><b>Conta:</b> {h_username}</p>
+        <p><b>Valor:</b> {h_value}</p>
+        <p><b>Tipo:</b> {h_type}</p>
+        <p><b>ID do pagamento:</b> {h_payment_id}</p>
+        <p><b>Data da ativação:</b> {h_started_at}</p>
+        <p><b>Validade:</b> {h_validity}</p>
+      </div>
+
+      <div style="border:1px solid rgba(125,211,252,.22);border-radius:18px;padding:18px;margin:18px 0;background:rgba(14,165,233,.08);">
+        <h2 style="margin:0 0 12px;font-size:18px;">Como ativar no app</h2>
+        <ol style="line-height:1.8;color:#e2e8f0;">
+          <li>Abra o PC Ultra Manager.</li>
+          <li>Faça login com a mesma conta usada na compra: <b>{h_username}</b>.</li>
+          <li>Entre em <b>Galeria de Temas</b>.</li>
+          <li>Clique em <b>Sincronizar compras</b>.</li>
+          <li>Selecione <b>{h_theme_name}</b> e clique em ativar/aplicar.</li>
+        </ol>
+      </div>
+
+      <p style="color:#cbd5e1;line-height:1.6;">Guarde este e-mail. Ele serve como comprovante em caso de emergência, suporte, troca de dispositivo ou dúvida sobre validade da assinatura.</p>
+      <p style="margin-top:22px;color:#f8fafc;"><b>Obrigado por apoiar o PC Ultra Manager.</b><br>Sua compra ajuda a manter o projeto vivo, mais bonito e mais forte.</p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+    return subject, text_body, html_body
+
+
+def send_theme_receipt_email(conn, order: Dict[str, Any]) -> Dict[str, Any]:
+    buyer_email = str(order.get("buyer_email") or "").strip().lower()
+    if not buyer_email:
+        return {"sent": False, "reason": "Pedido sem e-mail do comprador."}
+    if not is_valid_public_email(buyer_email):
+        conn.execute(update(theme_orders).where(theme_orders.c.id == int(order["id"])).values(receipt_email_error="E-mail inválido para envio de comprovante."))
+        return {"sent": False, "reason": "E-mail inválido."}
+    if order.get("receipt_email_sent_at"):
+        return {"sent": False, "already_sent": True, "sent_at": serialize_dt(order.get("receipt_email_sent_at"))}
+
+    user_row = conn.execute(select(users.c.username).where(users.c.id == int(order["user_id"]))).first()
+    username = row_dict(user_row).get("username") if user_row else str(order.get("user_id"))
+    subject, text_body, html_body = build_theme_receipt_email(order, str(username or "usuário"))
+    sent, message = send_transactional_email(buyer_email, subject, text_body, html_body)
+    if sent:
+        conn.execute(update(theme_orders).where(theme_orders.c.id == int(order["id"])).values(receipt_email_sent_at=now_utc(), receipt_email_error=None))
+        add_app_log(conn, int(order["user_id"]), "theme_receipt_email_sent", f"pedido_tema={order['id']}; theme={order.get('theme_id')}; email={buyer_email}")
+        return {"sent": True, "email": buyer_email}
+    conn.execute(update(theme_orders).where(theme_orders.c.id == int(order["id"])).values(receipt_email_error=message[:1000]))
+    add_app_log(conn, int(order["user_id"]), "theme_receipt_email_failed", f"pedido_tema={order['id']}; theme={order.get('theme_id')}; email={buyer_email}; {message}")
+    return {"sent": False, "email": buyer_email, "reason": message}
+
+
 def create_mp_pix_payment_public(external_reference: str, amount_cents: int, description: str, payer_email: str, payer_name: str, idempotency_prefix: str) -> Dict[str, Any]:
     amount = round(int(amount_cents) / 100, 2)
     payload = {
@@ -2070,8 +2370,63 @@ def normalize_theme_id(theme_id: str) -> str:
     return value
 
 
-def serialize_theme(row: Any, owned: bool = False) -> Dict[str, Any]:
+def theme_access_type(theme: Dict[str, Any]) -> str:
+    raw = str(theme.get("access_type") or theme.get("category") or "one_time").strip().casefold()
+    if raw in {"subscription", "assinatura", "mensal", "monthly"} or str(theme.get("id") or "").endswith("_subscription"):
+        return "subscription"
+    return "one_time"
+
+
+def theme_duration_days(theme: Dict[str, Any]) -> Optional[int]:
+    access_type = theme_access_type(theme)
+    if access_type != "subscription":
+        return None
+    try:
+        days = int(theme.get("duration_days") or 30)
+    except Exception:
+        days = 30
+    return max(1, min(3650, days))
+
+
+def normalize_dt(value: Any) -> Optional[datetime]:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        result = value
+    elif isinstance(value, str) and value.strip():
+        result = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    else:
+        return None
+    if result.tzinfo is None:
+        result = result.replace(tzinfo=timezone.utc)
+    return result.astimezone(timezone.utc)
+
+
+def entitlement_is_active(entitlement: Optional[Dict[str, Any]]) -> bool:
+    if not entitlement:
+        return False
+    if str(entitlement.get("status") or "active").casefold() not in {"active", "ativo"}:
+        return False
+    expires_at = normalize_dt(entitlement.get("expires_at"))
+    return expires_at is None or expires_at > now_utc()
+
+
+def subscription_expiry_for(theme: Dict[str, Any], current_expires_at: Any = None) -> Optional[datetime]:
+    days = theme_duration_days(theme)
+    if days is None:
+        return None
+    current = normalize_dt(current_expires_at)
+    base = current if current and current > now_utc() else now_utc()
+    return base + timedelta(days=days)
+
+
+def serialize_theme(row: Any, owned: bool = False, entitlement: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     data = row_dict(row)
+    entitlement = entitlement or {}
+    access_type = theme_access_type(data)
+    duration_days = theme_duration_days(data)
+    expires_at = normalize_dt(entitlement.get("expires_at"))
+    active_owned = bool(owned) and entitlement_is_active(entitlement) if entitlement else bool(owned)
     return {
         "id": data.get("id"),
         "name": data.get("name"),
@@ -2081,8 +2436,16 @@ def serialize_theme(row: Any, owned: bool = False) -> Dict[str, Any]:
         "preview_url": data.get("preview_url"),
         "accent_color": data.get("accent_color"),
         "category": data.get("category"),
+        "access_type": access_type,
+        "is_subscription": access_type == "subscription",
+        "duration_days": duration_days,
+        "duration_label": data.get("duration_label") or (f"{duration_days} dias" if duration_days else "Vitalício"),
+        "renewable": access_type == "subscription",
         "is_active": bool(data.get("is_active")),
-        "owned": bool(owned),
+        "owned": active_owned,
+        "owned_status": "active" if active_owned else ("expired" if entitlement else "not_owned"),
+        "purchased_at": serialize_dt(entitlement.get("purchased_at")) if entitlement else None,
+        "expires_at": serialize_dt(expires_at),
         "created_at": serialize_dt(data.get("created_at")),
         "updated_at": serialize_dt(data.get("updated_at")),
     }
@@ -2097,9 +2460,14 @@ def serialize_theme_order(row: Any) -> Dict[str, Any]:
         "theme_name": data.get("theme_name"),
         "price_cents": int(data.get("price_cents") or 0),
         "price_label": price_label(int(data.get("price_cents") or 0)),
+        "access_type": data.get("access_type") or "one_time",
+        "duration_days": data.get("duration_days"),
+        "access_expires_at": serialize_dt(data.get("access_expires_at")),
         "status": data.get("status"),
         "buyer_name": data.get("buyer_name"),
         "buyer_email": data.get("buyer_email"),
+        "receipt_email_sent_at": serialize_dt(data.get("receipt_email_sent_at")),
+        "receipt_email_error": data.get("receipt_email_error"),
         "admin_message": data.get("admin_message"),
         "created_at": serialize_dt(data.get("created_at")),
         "delivered_at": serialize_dt(data.get("delivered_at")),
@@ -2115,14 +2483,19 @@ def serialize_theme_order(row: Any) -> Dict[str, Any]:
     }
 
 
-def user_owns_theme(conn, user_id: int, theme_id: str) -> bool:
+def get_user_theme_entitlement(conn, user_id: int, theme_id: str) -> Optional[Dict[str, Any]]:
     found = conn.execute(
-        select(user_themes.c.id).where(
-            user_themes.c.user_id == int(user_id),
-            user_themes.c.theme_id == str(theme_id),
-        )
+        select(user_themes)
+        .where(user_themes.c.user_id == int(user_id), user_themes.c.theme_id == str(theme_id))
+        .order_by(user_themes.c.id.desc())
+        .limit(1)
     ).first()
-    return found is not None
+    return row_dict(found) if found else None
+
+
+def user_owns_theme(conn, user_id: int, theme_id: str) -> bool:
+    entitlement = get_user_theme_entitlement(conn, user_id, theme_id)
+    return entitlement_is_active(entitlement)
 
 
 def get_theme_or_404(conn, theme_id: str, active_only: bool = False) -> Dict[str, Any]:
@@ -2142,52 +2515,92 @@ def grant_theme_to_user(conn, user_id: int, theme_id: str, source: str = "purcha
     if not user_found:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     theme = get_theme_or_404(conn, theme_id, active_only=False)
+    access_type = theme_access_type(theme)
 
-    existing = conn.execute(
-        select(user_themes).where(user_themes.c.user_id == int(user_id), user_themes.c.theme_id == theme_id)
-    ).first()
+    existing = get_user_theme_entitlement(conn, int(user_id), theme_id)
+    if existing and access_type != "subscription" and entitlement_is_active(existing):
+        return {"already_owned": True, "theme": serialize_theme(theme, owned=True, entitlement=existing)}
+
+    expires_at = subscription_expiry_for(theme, existing.get("expires_at") if existing else None)
     if existing:
-        return {"already_owned": True, "theme": serialize_theme(theme, owned=True)}
-
-    conn.execute(
-        user_themes.insert().values(
-            user_id=int(user_id),
-            theme_id=theme_id,
-            source=str(source or "purchase")[:60],
-            order_id=order_id,
-            granted_by=granted_by,
-            note=safe_details(note),
-            purchased_at=now_utc(),
+        conn.execute(
+            update(user_themes)
+            .where(user_themes.c.id == existing["id"])
+            .values(
+                source=str(source or "purchase")[:60],
+                order_id=order_id,
+                granted_by=granted_by,
+                note=safe_details(note),
+                purchased_at=now_utc(),
+                expires_at=expires_at,
+                status="active",
+            )
         )
-    )
-    add_app_log(conn, int(user_id), "theme_unlocked", f"theme={theme_id}; source={source}; order={order_id}")
-    return {"theme": serialize_theme(theme, owned=True)}
+        entitlement = row_dict(conn.execute(select(user_themes).where(user_themes.c.id == existing["id"])).first())
+        action = "theme_subscription_renewed" if access_type == "subscription" else "theme_reactivated"
+    else:
+        result = conn.execute(
+            user_themes.insert().values(
+                user_id=int(user_id),
+                theme_id=theme_id,
+                source=str(source or "purchase")[:60],
+                order_id=order_id,
+                granted_by=granted_by,
+                note=safe_details(note),
+                purchased_at=now_utc(),
+                expires_at=expires_at,
+                status="active",
+            )
+        )
+        entitlement = row_dict(conn.execute(select(user_themes).where(user_themes.c.id == result.inserted_primary_key[0])).first())
+        action = "theme_subscription_started" if access_type == "subscription" else "theme_unlocked"
+
+    add_app_log(conn, int(user_id), action, f"theme={theme_id}; source={source}; order={order_id}; expires_at={serialize_dt(expires_at)}")
+    return {"theme": serialize_theme(theme, owned=True, entitlement=entitlement), "expires_at": serialize_dt(expires_at), "access_type": access_type}
 
 
 def deliver_theme_order(conn, order: Dict[str, Any], message: str = "Pagamento aprovado. Tema entregue automaticamente.") -> Dict[str, Any]:
     if order.get("status") == "delivered":
-        return {"already_delivered": True, "theme_id": order.get("theme_id")}
+        return {"already_delivered": True, "theme_id": order.get("theme_id"), "access_expires_at": serialize_dt(order.get("access_expires_at"))}
 
     granted = grant_theme_to_user(
         conn,
         int(order["user_id"]),
         str(order["theme_id"]),
-        source="purchase",
+        source="subscription" if str(order.get("access_type") or "") == "subscription" else "purchase",
         order_id=int(order["id"]),
         note=message,
     )
+    expires_at = granted.get("expires_at")
+    expires_dt = normalize_dt(expires_at)
+    delivered_at = now_utc()
+    paid_at = order.get("payment_paid_at") or delivered_at
     conn.execute(
         update(theme_orders)
         .where(theme_orders.c.id == int(order["id"]))
         .values(
             status="delivered",
             admin_message=message,
-            delivered_at=now_utc(),
-            payment_paid_at=order.get("payment_paid_at") or now_utc(),
+            delivered_at=delivered_at,
+            access_expires_at=expires_dt,
+            payment_paid_at=paid_at,
         )
     )
-    add_app_log(conn, int(order["user_id"]), "theme_order_delivered", f"theme={order['theme_id']}; pedido_tema={order['id']}; {message}")
-    return {"theme_id": order.get("theme_id"), "theme": granted.get("theme")}
+    email_order = dict(order)
+    email_order.update({
+        "status": "delivered",
+        "admin_message": message,
+        "delivered_at": delivered_at,
+        "access_expires_at": expires_dt,
+        "payment_paid_at": paid_at,
+    })
+    receipt_email = send_theme_receipt_email(conn, email_order)
+    if granted.get("access_type") == "subscription":
+        log_msg = f"assinatura_30d theme={order['theme_id']}; pedido_tema={order['id']}; expira={expires_at}; {message}"
+    else:
+        log_msg = f"theme={order['theme_id']}; pedido_tema={order['id']}; {message}"
+    add_app_log(conn, int(order["user_id"]), "theme_order_delivered", log_msg)
+    return {"theme_id": order.get("theme_id"), "theme": granted.get("theme"), "access_expires_at": expires_at, "access_type": granted.get("access_type"), "receipt_email": receipt_email}
 
 
 def sync_mp_payment_for_theme_order(order_id: int) -> Dict[str, Any]:
@@ -2226,14 +2639,36 @@ def list_theme_store():
 @app.get("/themes/my")
 def my_themes(user: Dict[str, Any] = Depends(get_user_by_token)):
     with engine.connect() as conn:
-        owned_rows = conn.execute(select(user_themes.c.theme_id).where(user_themes.c.user_id == int(user["id"]))).fetchall()
-        owned_ids = {row[0] for row in owned_rows}
+        entitlement_rows = conn.execute(
+            select(user_themes).where(user_themes.c.user_id == int(user["id"])).order_by(user_themes.c.id.desc())
+        ).fetchall()
+        entitlements: Dict[str, Dict[str, Any]] = {}
+        expired_entitlements: Dict[str, Dict[str, Any]] = {}
+        for row in entitlement_rows:
+            data = row_dict(row)
+            theme_id = str(data.get("theme_id"))
+            if theme_id in entitlements:
+                continue
+            if entitlement_is_active(data):
+                entitlements[theme_id] = data
+            elif theme_id not in expired_entitlements:
+                expired_entitlements[theme_id] = data
+        owned_ids = set(entitlements)
         store_rows = conn.execute(
             select(themes).where(themes.c.is_active == True).order_by(themes.c.category.asc(), themes.c.name.asc())  # noqa: E712
         ).fetchall()
-    all_themes = [serialize_theme(row, owned=row_dict(row).get("id") in owned_ids) for row in store_rows]
+    all_themes = []
+    expired = []
+    for row in store_rows:
+        theme_id = str(row_dict(row).get("id"))
+        entitlement = entitlements.get(theme_id)
+        expired_entitlement = expired_entitlements.get(theme_id)
+        all_themes.append(serialize_theme(row, owned=theme_id in owned_ids, entitlement=entitlement or expired_entitlement))
+        if expired_entitlement and theme_id not in owned_ids:
+            expired.append(serialize_theme(row, owned=False, entitlement=expired_entitlement))
     return {
         "themes": [theme for theme in all_themes if theme["owned"]],
+        "expired_themes": expired,
         "owned_theme_ids": sorted(owned_ids),
         "store": all_themes,
     }
@@ -2244,8 +2679,10 @@ def purchase_theme(data: ThemePurchaseRequest, user: Dict[str, Any] = Depends(ge
     theme_id = normalize_theme_id(data.theme_id)
     with engine.begin() as conn:
         theme = get_theme_or_404(conn, theme_id, active_only=True)
-        if user_owns_theme(conn, int(user["id"]), theme_id):
-            return {"message": "Tema já liberado na sua conta", "owned": True, "theme": serialize_theme(theme, owned=True)}
+        existing_entitlement = get_user_theme_entitlement(conn, int(user["id"]), theme_id)
+        access_type = theme_access_type(theme)
+        if existing_entitlement and access_type != "subscription" and entitlement_is_active(existing_entitlement):
+            return {"message": "Tema já liberado na sua conta", "owned": True, "theme": serialize_theme(theme, owned=True, entitlement=existing_entitlement)}
 
         recent_orders = int(conn.execute(
             select(func.count()).select_from(theme_orders).where(
@@ -2269,6 +2706,8 @@ def purchase_theme(data: ThemePurchaseRequest, user: Dict[str, Any] = Depends(ge
                 theme_id=theme_id,
                 theme_name=theme["name"],
                 price_cents=int(theme.get("price_cents") or 0),
+                access_type=access_type,
+                duration_days=theme_duration_days(theme),
                 status="pending",
                 buyer_name=str(data.buyer_name or user.get("username") or "Cliente")[:120],
                 buyer_email=str(data.buyer_email or "")[:180] or None,
@@ -2278,7 +2717,8 @@ def purchase_theme(data: ThemePurchaseRequest, user: Dict[str, Any] = Depends(ge
             )
         )
         order_id = result.inserted_primary_key[0]
-        add_app_log(conn, user["id"], "theme_order_created", f"pedido_tema={order_id}; theme={theme_id}; price={price_label(theme.get('price_cents') or 0)}")
+        log_kind = "assinatura" if access_type == "subscription" else "compra"
+        add_app_log(conn, user["id"], "theme_order_created", f"pedido_tema={order_id}; theme={theme_id}; tipo={log_kind}; price={price_label(theme.get('price_cents') or 0)}")
 
         if int(theme.get("price_cents") or 0) <= 0:
             order = row_dict(conn.execute(select(theme_orders).where(theme_orders.c.id == order_id)).first())
@@ -2318,14 +2758,17 @@ def purchase_theme(data: ThemePurchaseRequest, user: Dict[str, Any] = Depends(ge
                     payment_created_at=now_utc(),
                 )
             )
-        message = "Pedido de tema criado. Pague o PIX para liberar no app."
+        message = "Assinatura criada. Pague o PIX para liberar 30 dias de Matrix no app." if access_type == "subscription" else "Pedido de tema criado. Pague o PIX para liberar no app."
         status = "payment_pending"
 
     return {
         "message": message,
         "order_id": order_id,
         "status": status,
-        "theme": serialize_theme(theme, owned=False),
+        "theme": serialize_theme(theme, owned=False, entitlement=existing_entitlement if 'existing_entitlement' in locals() else None),
+        "access_type": access_type,
+        "duration_days": theme_duration_days(theme),
+        "duration_label": theme.get("duration_label") or ("30 dias" if access_type == "subscription" else "Vitalício"),
         **payment_payload,
     }
 
@@ -2362,6 +2805,9 @@ def admin_create_theme(data: ThemeCreateRequest, admin: Dict[str, Any] = Depends
         "preview_url": str(data.preview_url or "").strip() or None,
         "accent_color": str(data.accent_color or "").strip() or None,
         "category": str(data.category or "premium").strip()[:80] or "premium",
+        "access_type": "subscription" if str(data.access_type or "one_time").strip().casefold() in {"subscription", "assinatura", "mensal"} else "one_time",
+        "duration_days": int(data.duration_days or 30) if str(data.access_type or "one_time").strip().casefold() in {"subscription", "assinatura", "mensal"} else None,
+        "duration_label": data.duration_label or ("30 dias" if str(data.access_type or "one_time").strip().casefold() in {"subscription", "assinatura", "mensal"} else "Vitalício"),
         "is_active": bool(data.is_active),
         "created_by": int(admin["id"]),
         "updated_at": now_utc(),
