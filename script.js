@@ -7,6 +7,15 @@ let currentCategory = "todos";
 let selectedTheme = null;
 let currentWeeklyTheme = null;
 
+const WEEKLY_EVENT_ONLY_IDS = new Set([
+  "diamond_black_event",
+  "arctic_neon_weekly",
+  "crimson_cyber_weekly",
+  "royal_gold_weekly",
+  "purple_galaxy_weekly",
+  "emerald_obsidian_weekly"
+]);
+
 const $ = (id) => document.getElementById(id);
 const $$ = (query, root = document) => Array.from(root.querySelectorAll(query));
 
@@ -208,7 +217,25 @@ function isSubscription(theme) {
 function isWeeklyEvent(theme) {
   const category = String(theme?.category || "").toLowerCase();
   const accessType = String(theme?.access_type || "").toLowerCase();
-  return theme?.is_weekly_event || accessType === "weekly_event" || category.includes("evento") || theme?.id === "diamond_black_event";
+  return theme?.is_weekly_event || accessType === "weekly_event" || category.includes("evento") || WEEKLY_EVENT_ONLY_IDS.has(String(theme?.id || ""));
+}
+
+function isWeeklyEventOnly(theme) {
+  const category = String(theme?.category || "").toLowerCase();
+  const accessType = String(theme?.access_type || "").toLowerCase();
+  const id = String(theme?.id || "");
+  return Boolean(
+    theme?.hidden_from_main_store ||
+    theme?.weekly_event ||
+    theme?.is_weekly_event ||
+    WEEKLY_EVENT_ONLY_IDS.has(id) ||
+    category.includes("evento") ||
+    ["event_sale", "weekly_event_sale", "weekly_event"].includes(accessType)
+  );
+}
+
+function mainStoreOnly(themes) {
+  return (themes || []).filter(theme => !isWeeklyEventOnly(theme));
 }
 
 function accessLabel(theme) {
@@ -453,8 +480,9 @@ async function loadStore(extraHeroThemes = []) {
         if (String(error.message).toLowerCase().includes("token")) logout(false);
       }
     }
-    renderThemes(store.themes || [], ownedIds);
-    rotateHeroPreview([...(extraHeroThemes || []), ...(store.themes || [])]);
+    const storeThemes = mainStoreOnly(store.themes || []);
+    renderThemes(storeThemes, ownedIds);
+    rotateHeroPreview([...(extraHeroThemes || []), ...storeThemes]);
   } catch (error) {
     $("themesGrid").innerHTML = `<article class="theme-card"><h3>Erro ao carregar loja</h3><p>${escapeHtml(error.message)}</p><button class="btn ghost" onclick="loadStore()">Tentar novamente</button></article>`;
     toast(error.message, "error");
@@ -471,8 +499,8 @@ async function loadMyThemes() {
   try {
     const mine = await apiRequest("/themes/my");
     currentCategory = "todos";
-    renderThemes(mine.store || mine.themes || [], new Set(mine.owned_theme_ids || []));
-    toast("Temas da sua conta sincronizados.", "success");
+    renderThemes(mainStoreOnly(mine.store || mine.themes || []), new Set(mine.owned_theme_ids || []));
+    toast("Temas da sua conta sincronizados. Itens de evento ficam apenas na aba Evento Semanal.", "success");
   } catch (error) {
     toast(error.message, "error");
   }
