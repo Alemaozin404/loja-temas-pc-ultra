@@ -411,6 +411,36 @@ function renderThemes(themes, ownedIds = null) {
   }
 }
 
+function formatCountdown(endAt) {
+  if (!endAt) return "até segunda-feira";
+  const end = new Date(endAt);
+  if (Number.isNaN(end.getTime())) return "até segunda-feira";
+  const diff = end.getTime() - Date.now();
+  if (diff <= 0) return "encerrando agora";
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  if (days > 0) return `${days}d ${hours}h restantes`;
+  if (hours > 0) return `${hours}h ${minutes}min restantes`;
+  return `${Math.max(1, minutes)}min restantes`;
+}
+
+function renderWeeklyRotation(activeId) {
+  const host = $("weeklyRotationPreview");
+  if (!host) return;
+  const rotation = [
+    ["arctic_neon_weekly", "Arctic Neon"],
+    ["crimson_cyber_weekly", "Crimson Cyber"],
+    ["royal_gold_weekly", "Royal Gold"],
+    ["purple_galaxy_weekly", "Purple Galaxy"],
+    ["emerald_obsidian_weekly", "Emerald Obsidian"]
+  ];
+  host.innerHTML = `
+    <span>Rotação exclusiva: ${rotation.map(([id, name]) => id === activeId ? `<b>${escapeHtml(name)}</b>` : escapeHtml(name)).join(" • ")}</span>
+    <div class="rotation-dots">${rotation.map(([id]) => `<i class="${id === activeId ? "active" : ""}"></i>`).join("")}</div>
+  `;
+}
+
 function renderWeeklyEvent(payload) {
   const grid = $("weeklyEventGrid");
   const theme = payload?.theme;
@@ -418,25 +448,46 @@ function renderWeeklyEvent(payload) {
   currentWeeklyTheme = theme;
   const visual = visualFor(theme);
   const owned = Boolean(theme.owned);
-  $("weeklyTitle").textContent = theme.name || "Evento Semanal";
-  $("weeklyDescription").textContent = theme.description || "Tema semanal exclusivo.";
-  $("weeklyWindow").textContent = `Disponível até ${formatDate(payload.week_end || theme.event_ends_at) || "a próxima segunda-feira"}`;
+  const accent = theme.accent_color || visual.palette?.[1] || visual.palette?.[0] || "#f6c65b";
+  const weekEnd = payload.week_end || theme.event_ends_at;
+  const price = theme.price_label || money(theme.price_cents) || "R$ 2,50";
+  const title = theme.name || "Evento Semanal";
+  const description = theme.description || "Tema exclusivo do evento semanal. Aparece somente nesta aba por tempo limitado; quem compra recebe acesso permanente.";
+
+  document.documentElement.style.setProperty("--weekly-accent", accent);
+  $("weeklyTitle").textContent = title;
+  $("weeklyDescription").textContent = description;
+  $("weeklyWindow").textContent = `Disponível até ${formatDate(weekEnd) || "a próxima segunda-feira"}`;
   $("weeklyPool").textContent = `Rotação automática entre ${payload.pool_count || 5} temas`;
+  if ($("weeklyCountdown")) $("weeklyCountdown").textContent = formatCountdown(weekEnd);
+  if ($("weeklyPriceHero")) $("weeklyPriceHero").textContent = price;
+  renderWeeklyRotation(String(theme.id || ""));
+
   grid.innerHTML = "";
   const card = document.createElement("article");
-  card.className = "theme-card weekly-featured-card";
-  card.style.setProperty("--theme-accent", theme.accent_color || visual.palette?.[0] || "#7dd3fc");
+  card.className = "weekly-showcase-card";
+  card.style.setProperty("--theme-accent", accent);
   card.innerHTML = `
-    <div class="theme-card-top">
-      <span class="theme-category">Evento Semanal</span>
-      <span class="theme-price">${escapeHtml(theme.price_label || money(theme.price_cents))}</span>
+    <div class="weekly-ribbon-row">
+      <span class="theme-category">Exclusivo da semana</span>
+      <span class="weekly-price-badge">${escapeHtml(price)}</span>
     </div>
-    <div class="theme-access event">Disponível por 7 dias na aba do evento • acesso permanente após compra</div>
+
+    <div class="weekly-badges">
+      <span>Some da loja na próxima rotação</span>
+      <span>Compra permanente</span>
+      <span>Pix com entrega automática</span>
+    </div>
+
     <div class="theme-preview">${createMockPreview(theme, true)}</div>
-    <h3>${escapeHtml(theme.name || theme.id)}</h3>
-    <p>${escapeHtml(theme.description || "Tema exclusivo do evento semanal.")}</p>
-    <div class="feature-pills">${(visual.chips || []).slice(0, 3).map(chip => `<span>${escapeHtml(chip)}</span>`).join("")}</div>
-    ${owned ? `<span class="theme-owned">✓ Comprado permanente na sua conta</span>` : `<span class="theme-event-note">Troca automaticamente toda segunda-feira</span>`}
+
+    <div class="weekly-showcase-copy">
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(description)}</p>
+      <div class="weekly-feature-pills">${(visual.chips || ["Evento", "Semanal", "Premium"]).slice(0, 4).map(chip => `<span>${escapeHtml(chip)}</span>`).join("")}</div>
+      ${owned ? `<span class="theme-owned">✓ Comprado permanente na sua conta</span>` : `<span class="theme-event-note">Disponível só nesta semana. Quem compra mantém para sempre.</span>`}
+    </div>
+
     <div class="theme-actions">
       <button class="btn ghost" data-action="details">Ver detalhes</button>
       <button class="btn ${owned ? "ghost" : "primary"}" data-action="buy" ${owned ? "disabled" : ""}>${owned ? "Comprado permanente" : "Comprar evento semanal"}</button>

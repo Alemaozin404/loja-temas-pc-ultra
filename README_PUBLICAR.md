@@ -1,24 +1,23 @@
-# Loja de Temas — correção Evento Semanal fora da loja normal
+# PC Ultra Manager — Loja de Temas
 
-Esta versão corrige a separação correta entre:
+Pacote atualizado do site da Loja de Temas com visual premium da aba **Evento Semanal**.
 
-- Loja normal: temas pagos, assinaturas e temas permanentes normais.
-- Aba Evento Semanal: somente o tema ativo da semana.
+## O que mudou
 
-Regra aplicada:
+- A aba **Evento Semanal** agora tem visual de vitrine premium.
+- O tema semanal aparece como destaque exclusivo, separado da loja normal.
+- A seção mostra contador de tempo, preço, compra permanente e rotação automática.
+- Os temas de evento continuam fora da galeria normal da loja.
+- Quem compra o tema semanal mantém acesso permanente no app.
+- A troca semanal continua sendo controlada pelo servidor.
 
-- Os 5 temas da rotação semanal ficam fora da loja normal.
-- Diamond Black também não aparece mais na loja normal como tema comum.
-- O tema semanal aparece apenas na seção exclusiva Evento Semanal.
-- Quem comprar o tema do evento semanal recebe acesso permanente na conta.
-- Quando a semana troca, o tema anterior some da aba de evento para quem não comprou.
-- Quem comprou continua usando pelo app.
+## Arquivos para subir no GitHub Pages
 
-Arquivos do site:
+Substitua no repositório da loja:
 
-- index.html
-- style.css
-- script.js
-- README_PUBLICAR.md
+- `index.html`
+- `style.css`
+- `script.js`
+- `README_PUBLICAR.md`
 
-Depois de subir no GitHub Pages, use Ctrl + F5 para limpar cache do navegador.
+Depois aguarde o GitHub Pages atualizar e use `Ctrl + F5` no navegador.

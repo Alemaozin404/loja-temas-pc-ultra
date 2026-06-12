@@ -116,18 +116,34 @@
           <p>Um tema especial aparece aqui por 7 dias e muda automaticamente toda segunda-feira. Quem comprar durante o evento fica com o tema permanente na conta.</p>
         </div>
       </div>
-      <div class="weekly-panel glass">
-        <div class="weekly-info">
-          <span class="theme-kicker">Tema exclusivo da semana</span>
-          <h3 id="weeklyTitle">Carregando evento...</h3>
+      <div class="weekly-panel weekly-premium-panel glass">
+        <div class="weekly-info weekly-copy-card">
+          <span class="theme-kicker weekly-kicker">Evento semanal premium</span>
+          <h3><span>Tema exclusivo desta semana</span><b id="weeklyTitle">Carregando evento...</b></h3>
           <p id="weeklyDescription">Buscando o tema semanal ativo no servidor.</p>
-          <div class="weekly-meta">
+
+          <div class="weekly-countdown" aria-label="Contador do evento semanal">
+            <div>
+              <small>Termina em</small>
+              <strong id="weeklyCountdown">--</strong>
+            </div>
+            <span id="weeklyPriceHero">R$ 2,50</span>
+          </div>
+
+          <div class="weekly-meta weekly-premium-meta">
             <span id="weeklyWindow">Troca toda segunda-feira</span>
             <span id="weeklyPool">Rotação automática entre 5 temas</span>
+            <span>Compra permanente</span>
+          </div>
+
+          <div class="weekly-rotation-preview" id="weeklyRotationPreview" aria-label="Temas da rotação semanal">
+            <span>Rotação da coleção</span>
+            <div class="rotation-dots"><i></i><i></i><i></i><i></i><i></i></div>
           </div>
         </div>
-        <div id="weeklyEventGrid" class="weekly-event-grid">
-          <article class="theme-card"><h3>Carregando...</h3><p>Conectando ao servidor.</p></article>
+
+        <div id="weeklyEventGrid" class="weekly-event-grid weekly-showcase-zone">
+          <article class="weekly-loading-card"><h3>Carregando evento...</h3><p>Conectando ao servidor.</p></article>
         </div>
       </div>
     </section>
