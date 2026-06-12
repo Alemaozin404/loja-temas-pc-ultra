@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PC Ultra Manager — Loja de Temas Premium</title>
+  <title>PC Ultra Manager — Theme Store Cinema</title>
   <meta name="description" content="Loja oficial de temas premium do PC Ultra Manager. Compre no site e receba no app principal." />
-  <meta name="theme-color" content="#070b14" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#030409" />
+  <link rel="stylesheet" href="style.css?v=cinema-ultra-20260612-3" />
 </head>
 <body>
   <div id="progressBar" class="progress-bar"></div>
@@ -15,23 +15,21 @@
   <div class="aurora aurora-b"></div>
   <div class="aurora aurora-c"></div>
 
-  <header class="hero" id="top">
+  <header class="hero hero-cinema" id="top">
     <nav class="topbar glass" data-reveal>
       <a class="brand" href="#top" aria-label="PC Ultra Manager">
         <span class="brand-mark">PC</span>
         <span>
           <strong>PC Ultra Manager</strong>
-          <small>Theme Store</small>
+          <small>Theme Store Cinema</small>
         </span>
       </a>
-
       <div class="nav-links" aria-label="Navegação principal">
         <a href="#weekly-event">Evento Semanal</a>
-        <a href="#store">Temas</a>
+        <a href="#store">Loja</a>
         <a href="#how">Como recebe</a>
         <a href="#account">Conta</a>
       </div>
-
       <div class="session-pill" id="sessionPill">
         <span class="dot"></span>
         <span id="sessionStatus">Desconectado</span>
@@ -41,21 +39,20 @@
 
     <section class="hero-stage">
       <div class="hero-copy" data-reveal>
-        <span class="eyebrow">Loja oficial conectada ao servidor</span>
-        <h1>
-          Temas premium com entrega automática no app.
-        </h1>
+        <span class="eyebrow">Loja oficial • PIX • entrega automática</span>
+        <h1><span>Temas de cinema</span> para transformar seu app.</h1>
         <p>
-          Faça login com a mesma conta do PC Ultra Manager, compre pelo PIX e receba o tema no app. Após o pagamento, o e-mail informado recebe comprovante, tutorial e validade da assinatura.
+          Uma vitrine premium conectada ao servidor do PC Ultra Manager. Faça login, compre pelo PIX, receba o comprovante por e-mail e sincronize o tema direto no app.
         </p>
         <div class="hero-actions">
-          <a class="btn primary" href="#store">Explorar temas</a>
-          <a class="btn secondary" href="#account">Entrar na conta</a>
+          <a class="btn primary" href="#weekly-event">Ver evento da semana</a>
+          <a class="btn secondary" href="#store">Explorar loja</a>
+          <a class="btn ghost" href="#account">Entrar na conta</a>
         </div>
         <div class="hero-metrics">
-          <div><b id="metricThemes">3</b><span>temas ativos</span></div>
-          <div><b>PIX</b><span>liberação pelo servidor</span></div>
-          <div><b>1 login</b><span>site e app</span></div>
+          <div><b id="metricThemes">3</b><span>temas na loja</span></div>
+          <div><b>PIX</b><span>QR Code + copia e cola</span></div>
+          <div><b>Conta única</b><span>site e app</span></div>
         </div>
       </div>
 
@@ -76,7 +73,7 @@
         </div>
         <div class="preview-caption">
           <span class="pulse"></span>
-          <span>Prévia visual animada — veja detalhes em cada tema</span>
+          <span>Prévia viva do tema — escolha, pague e desbloqueie no app</span>
         </div>
       </div>
     </section>
@@ -88,60 +85,45 @@
         <span class="section-number">01</span>
         <div>
           <h2>Conta conectada</h2>
-          <p>Use o mesmo usuário e senha do app. O site só conversa com o servidor; Mercado Pago e entrega ficam protegidos na API.</p>
+          <p>Use o mesmo usuário e senha do app. O site apenas solicita; login, PIX, pagamento e entrega ficam no servidor oficial.</p>
         </div>
       </div>
-
       <div class="account-grid">
-        <label>
-          Usuário do app
-          <input id="username" autocomplete="username" placeholder="ex: CEOadmin ou seu usuário" />
-        </label>
-        <label>
-          Senha
-          <input id="password" type="password" autocomplete="current-password" placeholder="sua senha" />
-        </label>
+        <label>Usuário do app<input id="username" autocomplete="username" placeholder="ex: CEOadmin ou seu usuário" /></label>
+        <label>Senha<input id="password" type="password" autocomplete="current-password" placeholder="sua senha" /></label>
         <button id="loginBtn" class="btn primary">Entrar</button>
         <button id="registerBtn" class="btn ghost">Criar conta</button>
       </div>
       <p class="message" id="loginMessage"></p>
     </section>
 
-
     <section id="weekly-event" class="section weekly-event-shell" data-reveal>
       <div class="section-head store-head">
         <span class="section-number">02</span>
         <div>
           <h2>Evento Semanal</h2>
-          <p>Um tema especial aparece aqui por 7 dias e muda automaticamente toda segunda-feira. Quem comprar durante o evento fica com o tema permanente na conta.</p>
+          <p>Um drop exclusivo por semana. O tema aparece somente aqui, muda automaticamente toda segunda-feira e quem comprar mantém acesso permanente na conta.</p>
         </div>
       </div>
       <div class="weekly-panel weekly-premium-panel glass">
         <div class="weekly-info weekly-copy-card">
-          <span class="theme-kicker weekly-kicker">Evento semanal premium</span>
-          <h3><span>Tema exclusivo desta semana</span><b id="weeklyTitle">Carregando evento...</b></h3>
+          <span class="theme-kicker weekly-kicker">Drop exclusivo da semana</span>
+          <h3><span>Disponível agora</span><b id="weeklyTitle">Carregando...</b></h3>
           <p id="weeklyDescription">Buscando o tema semanal ativo no servidor.</p>
-
           <div class="weekly-countdown" aria-label="Contador do evento semanal">
-            <div>
-              <small>Termina em</small>
-              <strong id="weeklyCountdown">--</strong>
-            </div>
+            <div><small>Tempo restante</small><strong id="weeklyCountdown">--</strong></div>
             <span id="weeklyPriceHero">R$ 2,50</span>
           </div>
-
           <div class="weekly-meta weekly-premium-meta">
             <span id="weeklyWindow">Troca toda segunda-feira</span>
             <span id="weeklyPool">Rotação automática entre 5 temas</span>
-            <span>Compra permanente</span>
+            <span>Quem compra mantém para sempre</span>
           </div>
-
           <div class="weekly-rotation-preview" id="weeklyRotationPreview" aria-label="Temas da rotação semanal">
             <span>Rotação da coleção</span>
             <div class="rotation-dots"><i></i><i></i><i></i><i></i><i></i></div>
           </div>
         </div>
-
         <div id="weeklyEventGrid" class="weekly-event-grid weekly-showcase-zone">
           <article class="weekly-loading-card"><h3>Carregando evento...</h3><p>Conectando ao servidor.</p></article>
         </div>
@@ -152,35 +134,26 @@
       <div class="section-head store-head">
         <span class="section-number">03</span>
         <div>
-          <h2>Galeria de temas</h2>
-          <p>Agora cada tema mostra prévia, cores, efeitos, funções visuais e o que muda dentro do app.</p>
+          <h2>Loja principal</h2>
+          <p>Temas normais ficam aqui. Temas de Evento Semanal não aparecem nesta grade; eles ficam somente no drop semanal acima.</p>
         </div>
       </div>
-
       <div class="store-panel glass">
         <div class="search-row">
-          <div class="search-box">
-            <span>⌕</span>
-            <input id="searchInput" placeholder="Buscar tema, efeito, categoria..." />
-          </div>
+          <div class="search-box"><span>⌕</span><input id="searchInput" placeholder="Buscar tema, efeito, categoria..." /></div>
           <button id="reloadStoreBtn" class="btn ghost">Atualizar loja</button>
           <button id="myThemesBtn" class="btn secondary">Meus temas</button>
         </div>
         <div class="chips" id="categoryChips"></div>
       </div>
-
       <div id="themesGrid" class="themes-grid"></div>
     </section>
 
     <section id="payment" class="section payment-shell glass hidden" data-reveal>
       <div class="section-head">
         <span class="section-number">04</span>
-        <div>
-          <h2>Pagamento PIX</h2>
-          <p>Escaneie o QR Code ou copie o PIX. Depois clique em verificar pagamento para liberar o tema.</p>
-        </div>
+        <div><h2>Pagamento PIX</h2><p>Escaneie o QR Code ou copie o PIX. Depois verifique o pagamento para liberar o tema.</p></div>
       </div>
-
       <div class="payment-grid">
         <div class="payment-copy">
           <span class="status-badge" id="paymentStatusBadge">Aguardando PIX</span>
@@ -202,28 +175,13 @@
     </section>
 
     <section id="how" class="section how-grid" data-reveal>
-      <article class="how-card glass">
-        <span>1</span>
-        <h3>Compra no site</h3>
-        <p>Você escolhe um tema, informa nome/e-mail e o servidor gera o PIX com segurança.</p>
-      </article>
-      <article class="how-card glass">
-        <span>2</span>
-        <h3>Mercado Pago confirma</h3>
-        <p>O webhook valida o pagamento no servidor e evita entrega falsa.</p>
-      </article>
-      <article class="how-card glass">
-        <span>3</span>
-        <h3>Recebe no app</h3>
-        <p>Na Galeria de Temas do app, clique em Sincronizar compras.</p>
-      </article>
+      <article class="how-card glass"><span>1</span><h3>Compra no site</h3><p>Escolha o tema, informe nome/e-mail e gere o PIX pelo servidor.</p></article>
+      <article class="how-card glass"><span>2</span><h3>Pagamento validado</h3><p>Mercado Pago confirma e o servidor entrega o acesso real na sua conta.</p></article>
+      <article class="how-card glass"><span>3</span><h3>Recebe no app</h3><p>No app, abra Loja de Temas, clique em Sincronizar compras e aplique.</p></article>
     </section>
   </main>
 
-  <footer>
-    <strong>PC Ultra Manager Theme Store</strong>
-    <span>Site estático. Login, PIX e entrega são processados no servidor oficial.</span>
-  </footer>
+  <footer><strong>PC Ultra Manager Theme Store</strong><span>Site estático. Login, PIX e entrega são processados no servidor oficial.</span></footer>
 
   <div id="themeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-backdrop" data-close-modal></div>
@@ -238,15 +196,9 @@
           <div class="palette" id="modalPalette"></div>
           <h4>O que esse tema muda no app</h4>
           <ul id="modalFeatures" class="feature-list"></ul>
-          <div class="modal-actions">
-            <button id="modalBuyBtn" class="btn primary">Comprar com PIX</button>
-            <button class="btn ghost" data-close-modal>Voltar</button>
-          </div>
+          <div class="modal-actions"><button id="modalBuyBtn" class="btn primary">Comprar com PIX</button><button class="btn ghost" data-close-modal>Voltar</button></div>
         </div>
-        <div class="modal-preview-wrap">
-          <div id="modalPreview" class="mock-app modal-preview"></div>
-          <div class="spec-grid" id="modalSpecs"></div>
-        </div>
+        <div class="modal-preview-wrap"><div id="modalPreview" class="mock-app modal-preview"></div><div class="spec-grid" id="modalSpecs"></div></div>
       </div>
     </div>
   </div>
@@ -259,15 +211,8 @@
       <h2 id="purchaseTitle">Finalizar compra</h2>
       <p id="purchaseSubtitle">Preencha seus dados para gerar o PIX. O e-mail receberá comprovante, tutorial e validade da assinatura.</p>
       <div class="purchase-form">
-        <label>
-          Nome para o pedido
-          <input id="buyerName" placeholder="Seu nome" />
-        </label>
-        <label>
-          E-mail para comprovante e emergência
-          <input id="buyerEmail" type="email" placeholder="seuemail@gmail.com" required />
-          <small>Depois do pagamento aprovado, enviaremos o comprovante, tutorial de ativação, data da assinatura e validade.</small>
-        </label>
+        <label>Nome para o pedido<input id="buyerName" placeholder="Seu nome" /></label>
+        <label>E-mail para comprovante e emergência<input id="buyerEmail" type="email" placeholder="seuemail@gmail.com" required /><small>Depois do pagamento aprovado, enviaremos comprovante, tutorial de ativação, data da assinatura e validade quando houver.</small></label>
         <button id="confirmPurchaseBtn" class="btn primary">Gerar QR Code PIX</button>
       </div>
       <p id="purchaseMessage" class="message"></p>
@@ -275,6 +220,6 @@
   </div>
 
   <div id="toastHost" class="toast-host"></div>
-  <script src="script.js"></script>
+  <script src="script.js?v=cinema-ultra-20260612-3"></script>
 </body>
 </html>
