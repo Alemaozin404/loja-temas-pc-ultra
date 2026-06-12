@@ -5,6 +5,7 @@ let currentOrderId = null;
 let currentThemes = [];
 let currentCategory = "todos";
 let selectedTheme = null;
+let currentWeeklyTheme = null;
 
 const $ = (id) => document.getElementById(id);
 const $$ = (query, root = document) => Array.from(root.querySelectorAll(query));
@@ -80,6 +81,66 @@ const THEME_VISUALS = {
       "Preço teste": "R$ 2,50"
     }
   },
+  arctic_neon_weekly: {
+    features: [
+      "Neon azul gelo com fundo escuro glacial",
+      "Linhas cristalinas e brilho técnico futurista",
+      "Aparece somente na aba Evento Semanal",
+      "Disponível por 7 dias e muda toda segunda-feira",
+      "Quem compra fica com acesso permanente na conta"
+    ],
+    chips: ["Evento", "Neon", "Ice"],
+    palette: ["#06111B", "#7DD3FC", "#E0F2FE", "#0B1220"],
+    specs: { "Estilo": "Arctic Neon", "Evento": "Semanal automático", "Acesso": "Permanente após compra", "Preço": "R$ 2,50" }
+  },
+  crimson_cyber_weekly: {
+    features: [
+      "Vermelho cyber com preto profundo",
+      "Contornos agressivos e aura gamer premium",
+      "Aparece somente na aba Evento Semanal",
+      "Disponível por 7 dias e muda toda segunda-feira",
+      "Quem compra fica com acesso permanente na conta"
+    ],
+    chips: ["Evento", "Cyber", "Red"],
+    palette: ["#08030A", "#FF315A", "#FF8EA3", "#1A0710"],
+    specs: { "Estilo": "Crimson Cyber", "Evento": "Semanal automático", "Acesso": "Permanente após compra", "Preço": "R$ 2,50" }
+  },
+  royal_gold_weekly: {
+    features: [
+      "Dourado nobre com fundo preto luxo",
+      "Bordas premium e sensação executiva",
+      "Aparece somente na aba Evento Semanal",
+      "Disponível por 7 dias e muda toda segunda-feira",
+      "Quem compra fica com acesso permanente na conta"
+    ],
+    chips: ["Evento", "Royal", "Gold"],
+    palette: ["#070604", "#F6C65B", "#FFE9A8", "#1F1708"],
+    specs: { "Estilo": "Royal Gold", "Evento": "Semanal automático", "Acesso": "Permanente após compra", "Preço": "R$ 2,50" }
+  },
+  purple_galaxy_weekly: {
+    features: [
+      "Roxo cósmico com brilho de galáxia",
+      "Fundo espacial e cards cinematográficos",
+      "Aparece somente na aba Evento Semanal",
+      "Disponível por 7 dias e muda toda segunda-feira",
+      "Quem compra fica com acesso permanente na conta"
+    ],
+    chips: ["Evento", "Galaxy", "Purple"],
+    palette: ["#070314", "#A855F7", "#D8B4FE", "#1A0933"],
+    specs: { "Estilo": "Purple Galaxy", "Evento": "Semanal automático", "Acesso": "Permanente após compra", "Preço": "R$ 2,50" }
+  },
+  emerald_obsidian_weekly: {
+    features: [
+      "Verde esmeralda com preto obsidiana",
+      "Reflexos minerais e aura técnica elegante",
+      "Aparece somente na aba Evento Semanal",
+      "Disponível por 7 dias e muda toda segunda-feira",
+      "Quem compra fica com acesso permanente na conta"
+    ],
+    chips: ["Evento", "Emerald", "Obsidian"],
+    palette: ["#020806", "#34D399", "#A7F3D0", "#06231A"],
+    specs: { "Estilo": "Emerald Obsidian", "Evento": "Semanal automático", "Acesso": "Permanente após compra", "Preço": "R$ 2,50" }
+  },
   matrix_effect_subscription: {
     features: [
       "Chuva de códigos com atmosfera Matrix",
@@ -152,7 +213,7 @@ function isWeeklyEvent(theme) {
 
 function accessLabel(theme) {
   if (isSubscription(theme)) return `Assinatura mensal • ${theme.duration_label || "30 dias"}`;
-  if (isWeeklyEvent(theme)) return `Evento semanal • ${theme.duration_label || "7 dias"}`;
+  if (isWeeklyEvent(theme)) return `Evento semanal • ${theme.duration_label || "Compra permanente"}`;
   return theme.duration_label || "Compra vitalícia";
 }
 
@@ -323,7 +384,62 @@ function renderThemes(themes, ownedIds = null) {
   }
 }
 
-async function loadStore() {
+function renderWeeklyEvent(payload) {
+  const grid = $("weeklyEventGrid");
+  const theme = payload?.theme;
+  if (!grid || !theme) return;
+  currentWeeklyTheme = theme;
+  const visual = visualFor(theme);
+  const owned = Boolean(theme.owned);
+  $("weeklyTitle").textContent = theme.name || "Evento Semanal";
+  $("weeklyDescription").textContent = theme.description || "Tema semanal exclusivo.";
+  $("weeklyWindow").textContent = `Disponível até ${formatDate(payload.week_end || theme.event_ends_at) || "a próxima segunda-feira"}`;
+  $("weeklyPool").textContent = `Rotação automática entre ${payload.pool_count || 5} temas`;
+  grid.innerHTML = "";
+  const card = document.createElement("article");
+  card.className = "theme-card weekly-featured-card";
+  card.style.setProperty("--theme-accent", theme.accent_color || visual.palette?.[0] || "#7dd3fc");
+  card.innerHTML = `
+    <div class="theme-card-top">
+      <span class="theme-category">Evento Semanal</span>
+      <span class="theme-price">${escapeHtml(theme.price_label || money(theme.price_cents))}</span>
+    </div>
+    <div class="theme-access event">Disponível por 7 dias na aba do evento • acesso permanente após compra</div>
+    <div class="theme-preview">${createMockPreview(theme, true)}</div>
+    <h3>${escapeHtml(theme.name || theme.id)}</h3>
+    <p>${escapeHtml(theme.description || "Tema exclusivo do evento semanal.")}</p>
+    <div class="feature-pills">${(visual.chips || []).slice(0, 3).map(chip => `<span>${escapeHtml(chip)}</span>`).join("")}</div>
+    ${owned ? `<span class="theme-owned">✓ Comprado permanente na sua conta</span>` : `<span class="theme-event-note">Troca automaticamente toda segunda-feira</span>`}
+    <div class="theme-actions">
+      <button class="btn ghost" data-action="details">Ver detalhes</button>
+      <button class="btn ${owned ? "ghost" : "primary"}" data-action="buy" ${owned ? "disabled" : ""}>${owned ? "Comprado permanente" : "Comprar evento semanal"}</button>
+    </div>
+  `;
+  card.querySelector('[data-action="details"]').addEventListener("click", () => openThemeModal(theme, owned));
+  const buyButton = card.querySelector('[data-action="buy"]');
+  if (!owned) buyButton.addEventListener("click", () => openPurchaseModal(theme));
+  grid.appendChild(card);
+}
+
+async function loadWeeklyEvent() {
+  try {
+    const payload = await apiRequest("/themes/weekly-event");
+    renderWeeklyEvent(payload);
+    return payload.theme ? [payload.theme] : [];
+  } catch (error) {
+    if ($("weeklyEventGrid")) {
+      $("weeklyEventGrid").innerHTML = `<article class="theme-card"><h3>Erro ao carregar evento semanal</h3><p>${escapeHtml(error.message)}</p><button class="btn ghost" onclick="loadWeeklyEvent()">Tentar novamente</button></article>`;
+    }
+    return [];
+  }
+}
+
+async function refreshStoreAndEvent() {
+  const eventThemes = await loadWeeklyEvent();
+  await loadStore(eventThemes);
+}
+
+async function loadStore(extraHeroThemes = []) {
   renderSkeleton();
   try {
     let store = await apiRequest("/themes/store");
@@ -338,7 +454,7 @@ async function loadStore() {
       }
     }
     renderThemes(store.themes || [], ownedIds);
-    rotateHeroPreview(store.themes || []);
+    rotateHeroPreview([...(extraHeroThemes || []), ...(store.themes || [])]);
   } catch (error) {
     $("themesGrid").innerHTML = `<article class="theme-card"><h3>Erro ao carregar loja</h3><p>${escapeHtml(error.message)}</p><button class="btn ghost" onclick="loadStore()">Tentar novamente</button></article>`;
     toast(error.message, "error");
@@ -378,7 +494,7 @@ async function login() {
     setSessionStatus();
     setMessage("loginMessage", "Login realizado. Loja sincronizada.", "success");
     toast("Conta conectada com sucesso.", "success");
-    await loadStore();
+    await refreshStoreAndEvent();
   } catch (error) {
     setMessage("loginMessage", error.message, "error");
     toast(error.message, "error");
@@ -507,7 +623,7 @@ async function confirmPurchase() {
     if (order.owned) {
       closePurchaseModal();
       toast("Este tema já está liberado na sua conta.", "success");
-      await loadStore();
+      await refreshStoreAndEvent();
       return;
     }
     closePurchaseModal();
@@ -535,7 +651,7 @@ async function verifyPayment() {
       const expires = order.access_expires_at ? ` Expira em ${formatDate(order.access_expires_at)}.` : "";
       setMessage("paymentMessage", `Pagamento aprovado. Tema liberado no app principal.${expires}`, "success");
       toast(`Tema liberado na sua conta.${expires}`, "success");
-      await loadStore();
+      await refreshStoreAndEvent();
     } else {
       $("paymentStatusBadge").textContent = status;
       setMessage("paymentMessage", `Status atual: ${status}. Se já pagou, aguarde alguns segundos e tente de novo.`, "warning");
@@ -566,7 +682,7 @@ function logout(showToast = true) {
   localStorage.removeItem("pcultra_theme_username");
   setSessionStatus();
   if (showToast) toast("Você saiu da conta.");
-  loadStore();
+  refreshStoreAndEvent();
 }
 
 let heroTimer = null;
@@ -589,7 +705,7 @@ function rotateHeroPreview(themes) {
 function wireEvents() {
   $("loginBtn").addEventListener("click", login);
   $("registerBtn").addEventListener("click", register);
-  $("reloadStoreBtn").addEventListener("click", loadStore);
+  $("reloadStoreBtn").addEventListener("click", refreshStoreAndEvent);
   $("myThemesBtn").addEventListener("click", loadMyThemes);
   $("copyPixBtn").addEventListener("click", copyPix);
   $("verifyPaymentBtn").addEventListener("click", verifyPayment);
@@ -623,4 +739,4 @@ function revealOnScroll() {
 wireEvents();
 revealOnScroll();
 setSessionStatus();
-loadStore();
+refreshStoreAndEvent();

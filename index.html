@@ -26,6 +26,7 @@
       </a>
 
       <div class="nav-links" aria-label="Navegação principal">
+        <a href="#weekly-event">Evento Semanal</a>
         <a href="#store">Temas</a>
         <a href="#how">Como recebe</a>
         <a href="#account">Conta</a>
@@ -106,9 +107,34 @@
       <p class="message" id="loginMessage"></p>
     </section>
 
-    <section id="store" class="section" data-reveal>
+
+    <section id="weekly-event" class="section weekly-event-shell" data-reveal>
       <div class="section-head store-head">
         <span class="section-number">02</span>
+        <div>
+          <h2>Evento Semanal</h2>
+          <p>Um tema especial aparece aqui por 7 dias e muda automaticamente toda segunda-feira. Quem comprar durante o evento fica com o tema permanente na conta.</p>
+        </div>
+      </div>
+      <div class="weekly-panel glass">
+        <div class="weekly-info">
+          <span class="theme-kicker">Tema exclusivo da semana</span>
+          <h3 id="weeklyTitle">Carregando evento...</h3>
+          <p id="weeklyDescription">Buscando o tema semanal ativo no servidor.</p>
+          <div class="weekly-meta">
+            <span id="weeklyWindow">Troca toda segunda-feira</span>
+            <span id="weeklyPool">Rotação automática entre 5 temas</span>
+          </div>
+        </div>
+        <div id="weeklyEventGrid" class="weekly-event-grid">
+          <article class="theme-card"><h3>Carregando...</h3><p>Conectando ao servidor.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="store" class="section" data-reveal>
+      <div class="section-head store-head">
+        <span class="section-number">03</span>
         <div>
           <h2>Galeria de temas</h2>
           <p>Agora cada tema mostra prévia, cores, efeitos, funções visuais e o que muda dentro do app.</p>
@@ -132,7 +158,7 @@
 
     <section id="payment" class="section payment-shell glass hidden" data-reveal>
       <div class="section-head">
-        <span class="section-number">03</span>
+        <span class="section-number">04</span>
         <div>
           <h2>Pagamento PIX</h2>
           <p>Escaneie o QR Code ou copie o PIX. Depois clique em verificar pagamento para liberar o tema.</p>
