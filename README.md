@@ -8,7 +8,7 @@ Com o ProjetoPC, você pode adquirir temas exclusivos, desbloqueá-los automatic
 
 Acesse nossa loja:
 
-**https://projetopc.shop**
+**https://projetopc-loja.shop**
 
 No site você encontra:
 - 🎨 Temas Premium
@@ -104,7 +104,7 @@ Criar a melhor plataforma de personalização para usuários do PC Ultra Manager
 
 🌐 Site Oficial
 
-https://projetopc.shop
+https://projetopc-loja.shop
 
 ---
 
@@ -120,4 +120,4 @@ Cada apoio ajuda o projeto a crescer ainda mais.
 
 ---
 
-**ProjetoPC © Todos os direitos reservados.**
+**Projetopc-loja © Todos os direitos reservados.**
